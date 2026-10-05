@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets Connected Billing & WhatsApp Invoice App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen p-3 md:p-6">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+
+        <!-- Top Header Navigation -->
+        <header class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center text-white text-2xl shadow-md shadow-emerald-500/20">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">SmartBill & WhatsApp Dispatcher</h1>
+                    <p class="text-xs md:text-sm text-slate-500">Google Sheets Integrated Billing & Invoice Engine</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="toggleModal('setupModal')" class="px-3.5 py-2 text-xs md:text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-plug text-emerald-600"></i> Google Sheet API Settings
+                </button>
+                <button onclick="toggleModal('scriptModal')" class="px-3.5 py-2 text-xs md:text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-code text-slate-600"></i> Get Apps Script Code
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Form & Dynamic Calculation Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 md:p-6">
+                    
+                    <!-- Connection Status Banner -->
+                    <div id="connectionStatus" class="mb-5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between">
+                        <span class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                            <span>Currently running in <strong>Mock Mode</strong> (Sample Data). Connect your Google Sheet URL in Settings.</span>
+                        </span>
+                        <button onclick="fetchSheetData()" id="syncBtn" class="px-2.5 py-1 bg-amber-200 hover:bg-amber-300 rounded-md font-semibold text-amber-900 transition flex items-center gap-1">
+                            <i class="fa-solid fa-rotate"></i> Sync Data
+                        </button>
+                    </div>
+
+                    <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-user-gear text-emerald-500"></i> 1. Select Client
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Select or Enter Client <span class="text-red-500">*</span></label>
+                            <input list="clientsList" id="clientNameInput" onchange="onClientSelect()" placeholder="Type to search client..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition">
+                            <datalist id="clientsList">
+                                <!-- Populated dynamically -->
+                            </datalist>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">WhatsApp Phone <span class="text-red-500">*</span></label>
+                            <div class="flex">
+                                <span class="inline-flex items-center px-3 text-sm text-slate-600 bg-slate-200 border border-r-0 border-slate-300 rounded-l-lg font-medium">+91</span>
+                                <input type="tel" id="clientPhone" placeholder="9876543210" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-r-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Purchased Items Table -->
+                    <div class="mt-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-boxes-packing text-emerald-500"></i> 2. Purchased Items
+                            </h2>
+                            <button onclick="addItemRow()" class="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-plus"></i> Add Item
+                            </button>
+                        </div>
+
+                        <datalist id="productsList">
+                            <!-- Populated dynamically -->
+                        </datalist>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead>
+                                    <tr class="text-xs uppercase bg-slate-100 text-slate-600 font-semibold">
+                                        <th class="p-2.5 rounded-l-lg">Product Name</th>
+                                        <th class="p-2.5 w-24">Qty</th>
+                                        <th class="p-2.5 w-28">Rate (₹)</th>
+                                        <th class="p-2.5 w-28">Amount (₹)</th>
+                                        <th class="p-2.5 w-12 text-center rounded-r-lg">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsContainer" class="divide-y divide-slate-100">
+                                    <!-- Dynamic Rows Inserted Here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Payment Adjustment -->
+                    <div class="mt-6 pt-6 border-t border-slate-100">
+                        <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-wallet text-emerald-500"></i> 3. Payment Status & Balances
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Previous Due (₹)</label>
+                                <input type="number" id="previousDue" value="0" min="0" oninput="calculateBill()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Payment Status</label>
+                                <select id="paymentStatus" onchange="handleStatusChange()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition font-medium">
+                                    <option value="Paid">Fully Paid</option>
+                                    <option value="Partial">Partially Paid</option>
+                                    <option value="Pending" selected>Pending / Unpaid</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Amount Paid (₹)</label>
+                                <input type="number" id="amountPaid" value="0" min="0" oninput="calculateBill()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Billing Summary Sidebar -->
+            <div class="space-y-6">
+                <div class="bg-slate-900 text-white rounded-2xl shadow-xl p-6 relative overflow-hidden">
+                    <div class="absolute -right-8 -top-8 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                    <h3 class="text-sm uppercase font-semibold text-slate-400 tracking-wider mb-4">Invoice Summary</h3>
+
+                    <div class="space-y-3 border-b border-slate-800 pb-4 text-sm">
+                        <div class="flex justify-between text-slate-300">
+                            <span>Subtotal (Items):</span>
+                            <span class="font-medium text-white" id="summarySubtotal">₹0.00</span>
+                        </div>
+                        <div class="flex justify-between text-slate-300">
+                            <span>Previous Due:</span>
+                            <span class="font-medium text-amber-400" id="summaryPreviousDue">+ ₹0.00</span>
+                        </div>
+                        <div class="flex justify-between text-slate-300 pt-2 border-t border-slate-800 font-semibold text-base">
+                            <span class="text-white">Total Payable:</span>
+                            <span class="text-white" id="summaryTotalPayable">₹0.00</span>
+                        </div>
+                        <div class="flex justify-between text-slate-300">
+                            <span>Amount Paid:</span>
+                            <span class="font-medium text-emerald-400" id="summaryAmountPaid">- ₹0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 mb-6">
+                        <span class="text-xs uppercase font-semibold text-slate-400 tracking-wider">Remaining Balance</span>
+                        <div class="text-3xl font-extrabold text-amber-400 mt-1" id="summaryBalanceDue">₹0.00</div>
+                    </div>
+
+                    <!-- Main Action Buttons -->
+                    <div class="space-y-3">
+                        <button onclick="sendWhatsAppInvoice()" class="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 transition active:scale-[0.98]">
+                            <i class="fa-brands fa-whatsapp text-xl"></i> Send WhatsApp Invoice
+                        </button>
+                        <button onclick="saveEntryToSheet()" id="saveBtn" class="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl border border-slate-700 flex items-center justify-center gap-2 transition active:scale-[0.98]">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Save Entry to Google Sheet
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Toast Message Notification -->
+                <div id="toast" class="hidden p-4 rounded-xl text-sm font-medium text-center shadow-lg transition-all duration-300"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Sheet Web App Settings Modal -->
+    <div id="setupModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-plug text-emerald-500"></i> Google Sheet Connection
+                </h3>
+                <button onclick="toggleModal('setupModal')" class="text-slate-400 hover:text-slate-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-500 mb-4">
+                Paste your deployed Google Apps Script Web App URL below to fetch master client/product rates and push billing entries automatically.
+            </p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Google Apps Script Web App URL</label>
+                    <input type="url" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/AKfycbzVM1s4pEOpJ9I4JUMTjaLU86pJtiOVWg871feOydSlFA00fK30YN8J-xxBWYprz_Y6/exec
+" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="saveScriptUrl()" class="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg text-sm transition">Save & Sync</button>
+                    <button onclick="clearScriptUrl()" class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-sm transition">Reset to Mock</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Apps Script Code Modal -->
+    <div id="scriptModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-code text-emerald-500"></i> Apps Script Code for Google Sheet
+                </h3>
+                <button onclick="toggleModal('scriptModal')" class="text-slate-400 hover:text-slate-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-500 mb-3">
+                1. Open your Google Sheet $\rightarrow$ Click <strong>Extensions</strong> $\rightarrow$ <strong>Apps Script</strong>.<br>
+                2. Replace all existing code with the snippet below $\rightarrow$ Click <strong>Deploy</strong> $\rightarrow$ <strong>New Deployment</strong> $\rightarrow$ Choose type <strong>Web App</strong> $\rightarrow$ Set access to <strong>Anyone</strong>.
+            </p>
+            <div class="relative bg-slate-900 rounded-xl p-4 overflow-y-auto flex-1 text-xs font-mono text-emerald-400">
+                <button onclick="copyAppsScriptCode()" class="absolute top-3 right-3 px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-md text-xs font-sans transition flex items-center gap-1">
+                    <i class="fa-regular fa-copy"></i> Copy Code
+                </button>
+                <pre id="appScriptCodeText">
+function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // Fetch Clients (Sheet tab: Clients -> Col A: Name, Col B: Phone, Col C: Previous Due)
+  var clientSheet = ss.getSheetByName("Clients");
+  var clientData = clientSheet ? clientSheet.getDataRange().getValues() : [];
+  var clients = [];
+  for (var i = 1; i < clientData.length; i++) {
+    if(clientData[i][0]) {
+      clients.push({ name: clientData[i][0], phone: clientData[i][1], previousDue: clientData[i][2] || 0 });
+    }
+  }
+
+  // Fetch Products (Sheet tab: Products -> Col A: Item Name, Col B: Rate)
+  var productSheet = ss.getSheetByName("Products");
+  var productData = productSheet ? productSheet.getDataRange().getValues() : [];
+  var products = [];
+  for (var j = 1; j < productData.length; j++) {
+    if(productData[j][0]) {
+      products.push({ name: productData[j][0], rate: productData[j][1] || 0 });
+    }
+  }
+
+  var result = { clients: clients, products: products };
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Invoices") || ss.getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+
+  var itemsList = data.items.map(function(i){ return i.name + " (" + i.qty + "x" + i.rate + ")"; }).join(", ");
+
+  sheet.appendRow([
+    new Date(),
+    data.clientName,
+    data.clientPhone,
+    itemsList,
+    data.subtotal,
+    data.previousDue,
+    data.totalPayable,
+    data.amountPaid,
+    data.balanceDue,
+    data.status
+  ]);
+
+  return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);
+}
+                </pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        let items = [];
+        let clientsData = [];
+        let productsData = [];
+
+        // Mock Default Data for immediate testing
+        const mockClients = [
+            { name: "Rahul Sharma", phone: "9876543210", previousDue: 450 },
+            { name: "Priya Patel", phone: "9123456789", previousDue: 0 },
+            { name: "Amit Verma", phone: "9988776655", previousDue: 1200 }
+        ];
+
+        const mockProducts = [
+            { name: "Standard Product A", rate: 250 },
+            { name: "Premium Product B", rate: 600 },
+            { name: "Service Pack C", rate: 1500 }
+        ];
+
+        window.onload = function() {
+            loadSavedScriptUrl();
+            addItemRow();
+        };
+
+        function getScriptUrl() {
+            return localStorage.getItem('quickbill_script_url') || '';
+        }
+
+        function loadSavedScriptUrl() {
+            const url = getScriptUrl();
+            if (url) {
+                document.getElementById('scriptUrlInput').value = url;
+                fetchSheetData();
+            } else {
+                useMockData();
+            }
+        }
+
+        function saveScriptUrl() {
+            const url = document.getElementById('scriptUrlInput').value.trim();
+            if (url) {
+                localStorage.setItem('quickbill_script_url', url);
+                toggleModal('setupModal');
+                fetchSheetData();
+            }
+        }
+
+        function clearScriptUrl() {
+            localStorage.removeItem('quickbill_script_url');
+            document.getElementById('scriptUrlInput').value = '';
+            toggleModal('setupModal');
+            useMockData();
+            showToast("Reset to Mock Data", "info");
+        }
+
+        function useMockData() {
+            clientsData = mockClients;
+            productsData = mockProducts;
+            updateDatalists();
+            updateStatusBanner(false);
+        }
+
+        function updateStatusBanner(isConnected) {
+            const banner = document.getElementById('connectionStatus');
+            if (isConnected) {
+                banner.className = "mb-5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between";
+                banner.innerHTML = `
+                    <span class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span>Connected live to Google Sheet database.</span>
+                    </span>
+                    <button onclick="fetchSheetData()" id="syncBtn" class="px-2.5 py-1 bg-emerald-200 hover:bg-emerald-300 rounded-md font-semibold text-emerald-900 transition flex items-center gap-1">
+                        <i class="fa-solid fa-rotate"></i> Sync
+                    </button>
+                `;
+            } else {
+                banner.className = "mb-5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between";
+                banner.innerHTML = `
+                    <span class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        <span>Currently running in <strong>Mock Mode</strong>. Connect Google Sheet in Settings.</span>
+                    </span>
+                    <button onclick="toggleModal('setupModal')" class="px-2.5 py-1 bg-amber-200 hover:bg-amber-300 rounded-md font-semibold text-amber-900 transition flex items-center gap-1">
+                        <i class="fa-solid fa-plug"></i> Connect
+                    </button>
+                `;
+            }
+        }
+
+        async function fetchSheetData() {
+            const url = getScriptUrl();
+            if (!url) return;
+
+            showToast("Syncing data from Google Sheet...", "info");
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                clientsData = data.clients || [];
+                productsData = data.products || [];
+
+                updateDatalists();
+                updateStatusBanner(true);
+                showToast("Synced successfully with Google Sheet!", "success");
+            } catch (err) {
+                console.error("Fetch Error:", err);
+                showToast("Failed to fetch Google Sheet data. Check Web App permissions.", "error");
+            }
+        }
+
+        function updateDatalists() {
+            const clientsList = document.getElementById('clientsList');
+            clientsList.innerHTML = clientsData.map(c => `<option value="${c.name}">`).join('');
+
+            const productsList = document.getElementById('productsList');
+            productsList.innerHTML = productsData.map(p => `<option value="${p.name}">`).join('');
+        }
+
+        function onClientSelect() {
+            const selectedName = document.getElementById('clientNameInput').value.trim();
+            const foundClient = clientsData.find(c => c.name.toLowerCase() === selectedName.toLowerCase());
+
+            if (foundClient) {
+                document.getElementById('clientPhone').value = foundClient.phone || '';
+                document.getElementById('previousDue').value = foundClient.previousDue || 0;
+                calculateBill();
+                showToast(`Loaded details for ${foundClient.name}`, "info");
+            }
+        }
+
+        function onProductSelect(id, name) {
+            const item = items.find(i => i.id === id);
+            if (item) {
+                item.name = name;
+                const foundProduct = productsData.find(p => p.name.toLowerCase() === name.toLowerCase());
+                if (foundProduct) {
+                    item.rate = foundProduct.rate;
+                }
+                renderItems();
+                calculateBill();
+            }
+        }
+
+        // Dynamic Table Handlers
+        function addItemRow(name = '', qty = 1, rate = 0) {
+            const id = Date.now() + Math.random();
+            items.push({ id, name, qty: Number(qty), rate: Number(rate) });
+            renderItems();
+            calculateBill();
+        }
+
+        function removeItemRow(id) {
+            if (items.length === 1) {
+                showToast("Invoice must contain at least one product", "error");
+                return;
+            }
+            items = items.filter(item => item.id !== id);
+            renderItems();
+            calculateBill();
+        }
+
+        function renderItems() {
+            const container = document.getElementById('itemsContainer');
+            container.innerHTML = items.map(item => `
+                <tr class="hover:bg-slate-50/50 transition">
+                    <td class="p-2">
+                        <input list="productsList" value="${item.name}" onchange="onProductSelect(${item.id}, this.value)" placeholder="Select or type item" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
+                    </td>
+                    <td class="p-2">
+                        <input type="number" min="1" value="${item.qty}" oninput="updateItem(${item.id}, 'qty', this.value)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
+                    </td>
+                    <td class="p-2">
+                        <input type="number" min="0" value="${item.rate}" oninput="updateItem(${item.id}, 'rate', this.value)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
+                    </td>
+                    <td class="p-2 font-semibold text-slate-700">
+                        ₹${(item.qty * item.rate).toFixed(2)}
+                    </td>
+                    <td class="p-2 text-center">
+                        <button onclick="removeItemRow(${item.id})" class="text-slate-400 hover:text-red-500 p-1 transition">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateItem(id, field, value) {
+            const item = items.find(i => i.id === id);
+            if (item) {
+                item[field] = field === 'name' ? value : Math.max(0, parseFloat(value) || 0);
+                renderItems();
+                calculateBill();
+            }
+        }
+
+        function calculateBill() {
+            const subtotal = items.reduce((sum, item) => sum + (item.qty * item.rate), 0);
+            const previousDue = parseFloat(document.getElementById('previousDue').value) || 0;
+            const totalPayable = subtotal + previousDue;
+            
+            const status = document.getElementById('paymentStatus').value;
+            let amountPaidInput = document.getElementById('amountPaid');
+
+            if (status === 'Paid') {
+                amountPaidInput.value = totalPayable;
+                amountPaidInput.disabled = true;
+            } else if (status === 'Pending') {
+                amountPaidInput.value = 0;
+                amountPaidInput.disabled = true;
+            } else {
+                amountPaidInput.disabled = false;
+            }
+
+            const amountPaid = parseFloat(amountPaidInput.value) || 0;
+            const balanceDue = Math.max(0, totalPayable - amountPaid);
+
+            // Update Summary Text
+            document.getElementById('summarySubtotal').innerText = `₹${subtotal.toFixed(2)}`;
+            document.getElementById('summaryPreviousDue').innerText = `+ ₹${previousDue.toFixed(2)}`;
+            document.getElementById('summaryTotalPayable').innerText = `₹${totalPayable.toFixed(2)}`;
+            document.getElementById('summaryAmountPaid').innerText = `- ₹${amountPaid.toFixed(2)}`;
+            document.getElementById('summaryBalanceDue').innerText = `₹${balanceDue.toFixed(2)}`;
+
+            return { subtotal, previousDue, totalPayable, amountPaid, balanceDue, status };
+        }
+
+        function handleStatusChange() {
+            calculateBill();
+        }
+
+        function sendWhatsAppInvoice() {
+            const name = document.getElementById('clientNameInput').value.trim();
+            const phone = document.getElementById('clientPhone').value.trim();
+
+            if (!name || !phone) {
+                showToast("Please enter Client Name and Phone Number!", "error");
+                return;
+            }
+
+            const calc = calculateBill();
+            let msg = `🧾 *INVOICE / BILL STATEMENT*\n`;
+            msg += `📅 *Date:* ${new Date().toLocaleDateString()}\n`;
+            msg += `👤 *Client Name:* ${name}\n`;
+            msg += `----------------------------------\n`;
+            msg += `📦 *ITEM DETAILS:*\n`;
+
+            items.forEach((item, index) => {
+                msg += `${index + 1}. *${item.name}*\n`;
+                msg += `   Qty: ${item.qty} x ₹${item.rate} = ₹${(item.qty * item.rate).toFixed(2)}\n`;
+            });
+
+            msg += `----------------------------------\n`;
+            msg += `💵 *Subtotal:* ₹${calc.subtotal.toFixed(2)}\n`;
+            if (calc.previousDue > 0) {
+                msg += `📌 *Previous Due:* ₹${calc.previousDue.toFixed(2)}\n`;
+            }
+            msg += `💰 *Total Payable:* ₹${calc.totalPayable.toFixed(2)}\n`;
+            msg += `💳 *Amount Paid:* ₹${calc.amountPaid.toFixed(2)}\n`;
+            msg += `🔴 *Balance Due:* ₹${calc.balanceDue.toFixed(2)}\n`;
+            msg += `📊 *Status:* ${calc.status.toUpperCase()}\n`;
+            msg += `----------------------------------\n`;
+            msg += `Thank you for your business! 🙏`;
+
+            const cleanPhone = phone.replace(/\D/g, '');
+            const fullPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
+            const encodedUrl = `https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`;
+
+            window.open(encodedUrl, '_blank');
+            showToast("Opening WhatsApp...", "success");
+        }
+
+        async function saveEntryToSheet() {
+            const name = document.getElementById('clientNameInput').value.trim();
+            const phone = document.getElementById('clientPhone').value.trim();
+
+            if (!name || !phone) {
+                showToast("Please fill in Client Name & Phone!", "error");
+                return;
+            }
+
+            const url = getScriptUrl();
+            const calc = calculateBill();
+            const payload = {
+                clientName: name,
+                clientPhone: phone,
+                items: items,
+                ...calc
+            };
+
+            if (!url) {
+                showToast("Saved in local browser memory (Mock Mode). Connect Google Sheet API URL to post live.", "info");
+                return;
+            }
+
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Saving to Google Sheet...`;
+
+            try {
+                await fetch(url, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                showToast("Bill entry posted to Google Sheet!", "success");
+            } catch (err) {
+                console.error(err);
+                showToast("Error saving to Google Sheet", "error");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Save Entry to Google Sheet`;
+            }
+        }
+
+        // Helper UI Functions
+        function toggleModal(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
+
+        function copyAppsScriptCode() {
+            const text = document.getElementById('appScriptCodeText').innerText;
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast("Apps Script code copied to clipboard!", "success");
+        }
+
+        function showToast(message, type = "info") {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.className = `p-4 rounded-xl text-sm font-medium text-center shadow-lg transition-all duration-300 block ${
+                type === 'success' ? 'bg-emerald-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' : 'bg-slate-800 text-slate-100'
+            }`;
+            setTimeout(() => {
+                toast.className = "hidden";
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
