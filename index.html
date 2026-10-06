@@ -375,28 +375,47 @@ function loadSavedScriptUrl() {
 
         async function fetchSheetData() {
     const url = getScriptUrl();
-    if (!url) return;
+    if (!url) {
+        showToast("No Google Apps Script URL configured.", "error");
+        return;
+    }
 
     showToast("Syncing fresh data from sheet...", "info");
     try {
+        // Build clean URL without duplicate parameters
         const cleanUrl = url.split('?')[0];
-        const response = await fetch(`${cleanUrl}?nocache=${Date.now()}`);
+        const cacheBusterUrl = `${cleanUrl}?t=${Date.now()}`;
+
+        const response = await fetch(cacheBusterUrl, {
+            method: 'GET',
+            redirect: 'follow'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
         const data = await response.json();
-        
-        // Save fresh lists
+
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        // Assign fetched data
         clientsData = data.clients || [];
         productsData = data.products || [];
 
-        // Reset current items in table to match new products
+        // Clear existing bill items & initialize single clean row
         items = [];
-        addItemRow(); // Re-initialize first row with clean choices
+        addItemRow();
 
         updateDatalists();
         updateStatusBanner(true);
-        showToast("Synced latest product names!", "success");
+        showToast("Synced latest clients & rates successfully!", "success");
+
     } catch (err) {
         console.error("Fetch Error:", err);
-        showToast("Failed to fetch Google Sheet data.", "error");
+        showToast(`Sync Failed: ${err.message || 'Check URL/Network'}`, "error");
     }
 }
 
