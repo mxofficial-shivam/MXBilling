@@ -422,40 +422,53 @@ function updateDatalists() {
     // Force re-render of item rows in table
     renderItems();
 }
-        function onClientSelect() {
+        let currentClientRates = {};
+
+function onClientSelect() {
     const selectedName = document.getElementById('clientNameInput').value.trim();
-    if (!selectedName) return;
+    if (!selectedName) {
+        currentClientRates = {};
+        return;
+    }
 
     const foundClient = clientsData.find(c => c.name && c.name.toLowerCase() === selectedName.toLowerCase());
 
     if (foundClient) {
         document.getElementById('clientPhone').value = foundClient.phone || '';
         document.getElementById('previousDue').value = foundClient.previousDue || 0;
+        
+        // Store selected client's rates
+        currentClientRates = foundClient.rates || {};
+
+        // Update rates for any items already added in the bill table
+        items.forEach(item => {
+            if (item.name && currentClientRates[item.name] !== undefined) {
+                item.rate = currentClientRates[item.name];
+            }
+        });
+        
+        renderItems();
         calculateBill();
-        showToast(`Loaded details for ${foundClient.name}`, "info");
+        showToast(`Loaded details & rates for ${foundClient.name}`, "info");
     }
 }
 
-        function onProductSelect(id, name) {
-            const item = items.find(i => i.id === id);
-            if (item) {
-                item.name = name;
-                const foundProduct = productsData.find(p => p.name.toLowerCase() === name.toLowerCase());
-                if (foundProduct) {
-                    item.rate = foundProduct.rate;
-                }
-                renderItems();
-                calculateBill();
-            }
-        }
+function onProductSelect(itemId, selectedName) {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
 
-        // Dynamic Table Handlers
-        function addItemRow(name = '', qty = 1, rate = 0) {
-            const id = Date.now() + Math.random();
-            items.push({ id, name, qty: Number(qty), rate: Number(rate) });
-            renderItems();
-            calculateBill();
-        }
+    item.name = selectedName;
+    
+    // Auto-fetch rate for selected client, default to 0 if not found
+    if (selectedName && currentClientRates[selectedName] !== undefined) {
+        item.rate = currentClientRates[selectedName];
+    } else {
+        item.rate = 0;
+    }
+
+    renderItems();
+    calculateBill();
+}
 
         function removeItemRow(id) {
             if (items.length === 1) {
