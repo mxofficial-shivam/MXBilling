@@ -426,64 +426,23 @@ input[type=number] {
             calculateBill();
         }
 
-        // function renderItems() {
-        //     // 1. Remember focused input details before render
-        //     const activeEl = document.activeElement;
-        //     const activeId = activeEl ? activeEl.dataset?.fieldId : null;
-        //     const selectionStart = activeEl?.selectionStart;
-        
-        //     const container = document.getElementById('itemsContainer');
-        //     container.innerHTML = items.map(item => `
-        //         <tr class="hover:bg-slate-50/50 transition">
-        //             <td class="p-2">
-        //                 <input data-field-id="${item.id}-name" list="productsList" value="${escapeQuotes(item.name)}" onchange="onProductSelect(${item.id}, this.value)" placeholder="Select or type item" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
-        //             </td>
-        //             <td class="p-2">
-        //                 <input data-field-id="${item.id}-qty" type="number" min="1" value="${item.qty}" oninput="updateItem(${item.id}, 'qty', this.value)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
-        //             </td>
-        //             <td class="p-2">
-        //                 <input data-field-id="${item.id}-rate" type="number" min="0" value="${item.rate}" oninput="updateItem(${item.id}, 'rate', this.value)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
-        //             </td>
-        //             <td class="p-2 font-semibold text-slate-700">
-        //                 ₹${(item.qty * item.rate).toFixed(2)}
-        //             </td>
-        //             <td class="p-2 text-center">
-        //                 <button onclick="removeItemRow(${item.id})" class="text-slate-400 hover:text-red-500 p-1 transition">
-        //                     <i class="fa-solid fa-trash-can"></i>
-        //                 </button>
-        //             </td>
-        //         </tr>
-        //     `).join('');
-        
-        //     // 2. Restore focus after render
-        //     if (activeId) {
-        //         const inputToFocus = container.querySelector(`[data-field-id="${activeId}"]`);
-        //         if (inputToFocus) {
-        //             inputToFocus.focus();
-        //             if (selectionStart !== null && inputToFocus.type === 'text') {
-        //                 inputToFocus.setSelectionRange(selectionStart, selectionStart);
-        //             }
-        //         }
-        //     }
-        // }
         function renderItems() {
+            // 1. Remember focused input details before render
+            const activeEl = document.activeElement;
+            const activeId = activeEl ? activeEl.dataset?.fieldId : null;
+            const selectionStart = activeEl?.selectionStart;
+        
             const container = document.getElementById('itemsContainer');
-            if (!container) return;
-
-            if (items.length === 0) {
-                items.push({ id: Date.now(), name: '', qty: 1, rate: 0 });
-            }
-
             container.innerHTML = items.map(item => `
                 <tr class="hover:bg-slate-50/50 transition">
                     <td class="p-2">
-                        <input list="productsList" value="${item.name}" onchange="onProductSelect(${item.id}, this.value)" placeholder="Select or type item" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
+                        <input data-field-id="${item.id}-name" list="productsList" value="${(item.name)}" onchange="onProductSelect(${item.id}, this.value)" placeholder="Select or type item" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
                     </td>
                     <td class="p-2">
-                        <input type="number" min="1" value="${item.qty}" oninput="updateItem(${item.id}, 'qty', this.value)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
+                        <input data-field-id="${item.id}-qty" type="number" min="1" value="${item.qty}" oninput="updateItem(${item.id}, 'qty', this.value)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
                     </td>
                     <td class="p-2">
-                        <input type="number" min="0" value="${item.rate}" oninput="updateItem(${item.id}, 'rate', this.value)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
+                        <input data-field-id="${item.id}-rate" type="number" min="0" value="${item.rate}" oninput="updateItem(${item.id}, 'rate', this.value)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
                     </td>
                     <td class="p-2 font-semibold text-slate-700">
                         ₹${(item.qty * item.rate).toFixed(2)}
@@ -495,7 +454,48 @@ input[type=number] {
                     </td>
                 </tr>
             `).join('');
+        
+            // 2. Restore focus after render
+            if (activeId) {
+                const inputToFocus = container.querySelector(`[data-field-id="${activeId}"]`);
+                if (inputToFocus) {
+                    inputToFocus.focus();
+                    if (selectionStart !== null && inputToFocus.type === 'text') {
+                        inputToFocus.setSelectionRange(selectionStart, selectionStart);
+                    }
+                }
+            }
         }
+        // function renderItems() {
+        //     const container = document.getElementById('itemsContainer');
+        //     if (!container) return;
+
+        //     if (items.length === 0) {
+        //         items.push({ id: Date.now(), name: '', qty: 1, rate: 0 });
+        //     }
+
+        //     container.innerHTML = items.map(item => `
+        //         <tr class="hover:bg-slate-50/50 transition">
+        //             <td class="p-2">
+        //                 <input list="productsList" value="${item.name}" onchange="onProductSelect(${item.id}, this.value)" placeholder="Select or type item" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
+        //             </td>
+        //             <td class="p-2">
+        //                 <input type="number" min="1" value="${item.qty}" oninput="updateItem(${item.id}, 'qty', this.value)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
+        //             </td>
+        //             <td class="p-2">
+        //                 <input type="number" min="0" value="${item.rate}" oninput="updateItem(${item.id}, 'rate', this.value)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
+        //             </td>
+        //             <td class="p-2 font-semibold text-slate-700">
+        //                 ₹${(item.qty * item.rate).toFixed(2)}
+        //             </td>
+        //             <td class="p-2 text-center">
+        //                 <button onclick="removeItemRow(${item.id})" class="text-slate-400 hover:text-red-500 p-1 transition">
+        //                     <i class="fa-solid fa-trash-can"></i>
+        //                 </button>
+        //             </td>
+        //         </tr>
+        //     `).join('');
+        // }
 
         function updateItem(id, field, value) {
             const item = items.find(i => i.id === id);
