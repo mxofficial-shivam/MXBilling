@@ -393,13 +393,19 @@ function loadSavedScriptUrl() {
             }
         }
 
-        function updateDatalists() {
-            const clientsList = document.getElementById('clientsList');
-            clientsList.innerHTML = clientsData.map(c => `<option value="${c.name}">`).join('');
+       function updateDatalists() {
+    const clientsList = document.getElementById('clientsList');
+    clientsList.innerHTML = clientsData.map(c => `<option value="${c.name || c}">`).join('');
 
-            const productsList = document.getElementById('productsList');
-            productsList.innerHTML = productsData.map(p => `<option value="${p.name}">`).join('');
-        }
+    const productsList = document.getElementById('productsList');
+    productsList.innerHTML = productsData
+        .filter(p => p && (p.name || typeof p === 'string'))
+        .map(p => {
+            const name = typeof p === 'string' ? p : p.name;
+            return `<option value="${name}">`;
+        })
+        .join('');
+}
 
         function onClientSelect() {
             const selectedName = document.getElementById('clientNameInput').value.trim();
