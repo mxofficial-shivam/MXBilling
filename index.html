@@ -309,19 +309,17 @@ function doPost(e) {
             addItemRow();
         };
 
-        function getScriptUrl() {
-            return localStorage.getItem('quickbill_script_url') || '';
-        }
+        const HARDCODED_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVM1s4pEOpJ9I4JUMTjaLU86pJtiOVWg871feOydSlFA00fK30YN8J-xxBWYprz_Y6/exec";
 
-        function loadSavedScriptUrl() {
-            const url = getScriptUrl();
-            if (url) {
-                document.getElementById('scriptUrlInput').value = url;
-                fetchSheetData();
-            } else {
-                useMockData();
-            }
-        }
+function getScriptUrl() {
+    return localStorage.getItem('quickbill_script_url') || HARDCODED_SCRIPT_URL;
+}
+
+function loadSavedScriptUrl() {
+    const url = getScriptUrl();
+    document.getElementById('scriptUrlInput').value = url;
+    fetchSheetData();
+}
 
         function saveScriptUrl() {
             const url = document.getElementById('scriptUrlInput').value.trim();
