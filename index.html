@@ -373,25 +373,27 @@ function loadSavedScriptUrl() {
         }
 
         async function fetchSheetData() {
-            const url = getScriptUrl();
-            if (!url) return;
+    const url = getScriptUrl();
+    if (!url) return;
 
-            showToast("Syncing data from Google Sheet...", "info");
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                clientsData = data.clients || [];
-                productsData = data.products || [];
+    showToast("Syncing fresh data from sheet...", "info");
+    try {
+        // Force fresh request by appending current timestamp
+        const cleanUrl = url.split('?')[0];
+        const response = await fetch(`${cleanUrl}?nocache=${Date.now()}`);
+        const data = await response.json();
+        
+        clientsData = data.clients || [];
+        productsData = data.products || [];
 
-                updateDatalists();
-                updateStatusBanner(true);
-                showToast("Synced successfully with Google Sheet!", "success");
-            } catch (err) {
-                console.error("Fetch Error:", err);
-                showToast("Failed to fetch Google Sheet data. Check Web App permissions.", "error");
-            }
-        }
+        updateDatalists();
+        updateStatusBanner(true);
+        showToast("Synced latest product names!", "success");
+    } catch (err) {
+        console.error("Fetch Error:", err);
+        showToast("Failed to fetch Google Sheet data.", "error");
+    }
+}
 
        function updateDatalists() {
     const clientsList = document.getElementById('clientsList');
