@@ -200,8 +200,7 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Google Apps Script Web App URL</label>
-                    <input type="url" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/AKfycbzVM1s4pEOpJ9I4JUMTjaLU86pJtiOVWg871feOydSlFA00fK30YN8J-xxBWYprz_Y6/exec
-" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                    <input type="url" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
                 </div>
                 <div class="flex gap-2">
                     <button onclick="saveScriptUrl()" class="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg text-sm transition">Save & Sync</button>
@@ -211,117 +210,30 @@
         </div>
     </div>
 
-    <!-- Google Apps Script Code Modal -->
-    <div id="scriptModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-code text-emerald-500"></i> Apps Script Code for Google Sheet
-                </h3>
-                <button onclick="toggleModal('scriptModal')" class="text-slate-400 hover:text-slate-600 text-lg">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <p class="text-xs text-slate-500 mb-3">
-                1. Open your Google Sheet $\rightarrow$ Click <strong>Extensions</strong> $\rightarrow$ <strong>Apps Script</strong>.<br>
-                2. Replace all existing code with the snippet below $\rightarrow$ Click <strong>Deploy</strong> $\rightarrow$ <strong>New Deployment</strong> $\rightarrow$ Choose type <strong>Web App</strong> $\rightarrow$ Set access to <strong>Anyone</strong>.
-            </p>
-            <div class="relative bg-slate-900 rounded-xl p-4 overflow-y-auto flex-1 text-xs font-mono text-emerald-400">
-                <button onclick="copyAppsScriptCode()" class="absolute top-3 right-3 px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-md text-xs font-sans transition flex items-center gap-1">
-                    <i class="fa-regular fa-copy"></i> Copy Code
-                </button>
-                <pre id="appScriptCodeText">
-function doGet(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  
-  // Fetch Clients (Sheet tab: Clients -> Col A: Name, Col B: Phone, Col C: Previous Due)
-  var clientSheet = ss.getSheetByName("Clients");
-  var clientData = clientSheet ? clientSheet.getDataRange().getValues() : [];
-  var clients = [];
-  for (var i = 1; i < clientData.length; i++) {
-    if(clientData[i][0]) {
-      clients.push({ name: clientData[i][0], phone: clientData[i][1], previousDue: clientData[i][2] || 0 });
-    }
-  }
-
-  // Fetch Products (Sheet tab: Products -> Col A: Item Name, Col B: Rate)
-  var productSheet = ss.getSheetByName("Products");
-  var productData = productSheet ? productSheet.getDataRange().getValues() : [];
-  var products = [];
-  for (var j = 1; j < productData.length; j++) {
-    if(productData[j][0]) {
-      products.push({ name: productData[j][0], rate: productData[j][1] || 0 });
-    }
-  }
-
-  var result = { clients: clients, products: products };
-  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
-}
-
-function doPost(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName("Invoices") || ss.getActiveSheet();
-  var data = JSON.parse(e.postData.contents);
-
-  var itemsList = data.items.map(function(i){ return i.name + " (" + i.qty + "x" + i.rate + ")"; }).join(", ");
-
-  sheet.appendRow([
-    new Date(),
-    data.clientName,
-    data.clientPhone,
-    itemsList,
-    data.subtotal,
-    data.previousDue,
-    data.totalPayable,
-    data.amountPaid,
-    data.balanceDue,
-    data.status
-  ]);
-
-  return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);
-}
-                </pre>
-            </div>
-        </div>
-    </div>
-
     <!-- JavaScript Application Logic -->
     <script>
-        // Version 1.0.5 - Cache Busting Update
         let currentClientRates = {};
         let items = [];
         let clientsData = [];
         let productsData = [];
 
-        // Mock Default Data for immediate testing
-        const mockClients = [
-            { name: "Rahul Sharma", phone: "9876543210", previousDue: 450 },
-            { name: "Priya Patel", phone: "9123456789", previousDue: 0 },
-            { name: "Amit Verma", phone: "9988776655", previousDue: 1200 }
-        ];
-
-        const mockProducts = [
-            { name: "Standard Product A", rate: 250 },
-            { name: "Premium Product B", rate: 600 },
-            { name: "Service Pack C", rate: 1500 }
-        ];
-
         window.onload = function() {
             loadSavedScriptUrl();
-            addItemRow();
         };
 
-        const HARDCODED_SCRIPT_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnQuI1JIM647dsdJzRIHSQwzHVrPNLfSaQNPrl7fZcby7FvJP5UgnNuHQ1SCIW1YQQaqS5NVaLOUOsrqU3PD1DZXHF99yR-kvvc-rkliOglP1_fUiLbNYOEYWq0AgYyX1BCS1-Gd8hkL2Fca9bfK3aTTCgfsgYkZcgyph5m81naKpcyW_VQh_dTIddSeVU0_pi_ltcuNFNtW8cPj5QvQMljZ-dDdQNR83CxpKc-29wSnjL9VjsUC1NkmzscRfzhOK7ivRptiaca3nKz_yJE_3qPYZoZvBg&lib=MvL_ShaeY-D9J3sSnrUPh_F4iG3xxBGH1";
+        function getScriptUrl() {
+            return localStorage.getItem('quickbill_script_url') || '';
+        }
 
-function getScriptUrl() {
-    return localStorage.getItem('quickbill_script_url') || HARDCODED_SCRIPT_URL;
-}
-
-function loadSavedScriptUrl() {
-    const url = getScriptUrl();
-    document.getElementById('scriptUrlInput').value = url;
-    fetchSheetData();
-}
+        function loadSavedScriptUrl() {
+            const url = getScriptUrl();
+            document.getElementById('scriptUrlInput').value = url;
+            if (url) {
+                fetchSheetData();
+            } else {
+                useMockData();
+            }
+        }
 
         function saveScriptUrl() {
             const url = document.getElementById('scriptUrlInput').value.trim();
@@ -341,8 +253,16 @@ function loadSavedScriptUrl() {
         }
 
         function useMockData() {
-            clientsData = mockClients;
-            productsData = mockProducts;
+            clientsData = [
+                { name: "Yummy Section", phone: "9876543210", previousDue: 450, rates: { "Mix Veg Momo": 3.5, "Paneer": 4.5 } },
+                { name: "Hunger Station", phone: "9123456789", previousDue: 0, rates: { "Mix Veg Momo": 4, "Paneer": 6 } }
+            ];
+            productsData = [
+                { name: "Mix Veg Momo", rate: 0 },
+                { name: "Paneer", rate: 0 }
+            ];
+            items = [];
+            addItemRow();
             updateDatalists();
             updateStatusBanner(false);
         }
@@ -374,116 +294,19 @@ function loadSavedScriptUrl() {
             }
         }
 
-        async function fetchSheetData() {
-    const url = getScriptUrl();
-    if (!url) {
-        if (typeof showToast === 'function') showToast("No Google Apps Script URL configured.", "error");
-        return;
-    }
-
-    if (typeof showToast === 'function') showToast("Syncing fresh data from sheet...", "info");
-    try {
-        const cleanUrl = url.split('?')[0];
-        const cacheBusterUrl = `${cleanUrl}?t=${Date.now()}`;
-
-        const response = await fetch(cacheBusterUrl, { method: 'GET', redirect: 'follow' });
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-
-        clientsData = data.clients || [];
-        productsData = data.products || [];
-
-        // Re-initialize item rows if items array exists
-        if (Array.isArray(items)) {
-            items = [];
-            if (typeof addItemRow === 'function') {
-                addItemRow();
-            }
+        function addItemRow() {
+            const newItem = {
+                id: Date.now() + Math.random(),
+                name: '',
+                qty: 1,
+                rate: 0
+            };
+            items.push(newItem);
+            renderItems();
         }
 
-        if (typeof updateDatalists === 'function') updateDatalists();
-        if (typeof updateStatusBanner === 'function') updateStatusBanner(true);
-        if (typeof showToast === 'function') showToast("Synced latest clients & rates successfully!", "success");
-
-    } catch (err) {
-        console.error("Fetch Error:", err);
-        if (typeof showToast === 'function') showToast(`Sync Failed: ${err.message || 'Check Network'}`, "error");
-    }
-}
-
-function updateDatalists() {
-    // Populate client list datalist
-    const clientsList = document.getElementById('clientsList');
-    if (clientsList) {
-        clientsList.innerHTML = clientsData.map(c => `<option value="${c.name || c}">`).join('');
-    }
-
-    // Populate product datalist fallback
-    const productsList = document.getElementById('productsList');
-    if (productsList) {
-        productsList.innerHTML = productsData
-            .filter(p => p && (p.name || typeof p === 'string'))
-            .map(p => {
-                const name = typeof p === 'string' ? p : p.name;
-                return `<option value="${name}">${name}</option>`;
-            })
-            .join('');
-    }
-
-    // Force re-render of item rows in table
-    renderItems();
-}
-        let currentClientRates = {};
-
-function onClientSelect() {
-    const selectedName = document.getElementById('clientNameInput').value.trim();
-    if (!selectedName) {
-        currentClientRates = {};
-        return;
-    }
-
-    const foundClient = clientsData.find(c => c.name && c.name.toLowerCase() === selectedName.toLowerCase());
-
-    if (foundClient) {
-        if (document.getElementById('clientPhone')) document.getElementById('clientPhone').value = foundClient.phone || '';
-        if (document.getElementById('previousDue')) document.getElementById('previousDue').value = foundClient.previousDue || 0;
-        
-        currentClientRates = foundClient.rates || {};
-
-        items.forEach(item => {
-            if (item.name && currentClientRates[item.name] !== undefined) {
-                item.rate = currentClientRates[item.name];
-                item.amount = (item.quantity || 1) * item.rate;
-            }
-        });
-        
-        if (typeof renderItems === 'function') renderItems();
-        if (typeof showToast === 'function') showToast(`Loaded rates for ${foundClient.name}`, "info");
-    }
-}
-
-function onProductSelect(itemId, selectedName) {
-    const item = items.find(i => i.id === itemId);
-    if (!item) return;
-
-    item.name = selectedName;
-    
-    // Auto-assign rate from current selected client, default to 0
-    if (selectedName && currentClientRates[selectedName] !== undefined) {
-        item.rate = currentClientRates[selectedName];
-    } else {
-        item.rate = 0;
-    }
-
-    item.amount = (item.quantity || 1) * (item.rate || 0);
-    if (typeof renderItems === 'function') renderItems();
-    if (typeof calculateBill === 'function') calculateBill();
-}
-
         function removeItemRow(id) {
-            if (items.length === 1) {
+            if (items.length <= 1) {
                 showToast("Invoice must contain at least one product", "error");
                 return;
             }
@@ -492,8 +315,113 @@ function onProductSelect(itemId, selectedName) {
             calculateBill();
         }
 
+        async function fetchSheetData() {
+            const url = getScriptUrl();
+            if (!url) {
+                showToast("No Google Apps Script URL configured.", "error");
+                useMockData();
+                return;
+            }
+
+            showToast("Syncing fresh data from sheet...", "info");
+            try {
+                const cleanUrl = url.split('?')[0];
+                const cacheBusterUrl = `${cleanUrl}?t=${Date.now()}`;
+
+                const response = await fetch(cacheBusterUrl, { method: 'GET', redirect: 'follow' });
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                clientsData = data.clients || [];
+                productsData = data.products || [];
+
+                items = [];
+                addItemRow();
+
+                updateDatalists();
+                updateStatusBanner(true);
+                showToast("Synced latest clients & rates successfully!", "success");
+
+            } catch (err) {
+                console.error("Fetch Error:", err);
+                showToast(`Sync Failed: ${err.message || 'Check Network'}`, "error");
+                updateStatusBanner(false);
+            }
+        }
+
+        function updateDatalists() {
+            const clientsList = document.getElementById('clientsList');
+            if (clientsList) {
+                clientsList.innerHTML = clientsData.map(c => `<option value="${c.name || c}">`).join('');
+            }
+
+            const productsList = document.getElementById('productsList');
+            if (productsList) {
+                productsList.innerHTML = productsData
+                    .filter(p => p && (p.name || typeof p === 'string'))
+                    .map(p => {
+                        const name = typeof p === 'string' ? p : p.name;
+                        return `<option value="${name}">${name}</option>`;
+                    })
+                    .join('');
+            }
+
+            renderItems();
+        }
+
+        function onClientSelect() {
+            const selectedName = document.getElementById('clientNameInput').value.trim();
+            if (!selectedName) {
+                currentClientRates = {};
+                return;
+            }
+
+            const foundClient = clientsData.find(c => c.name && c.name.toLowerCase() === selectedName.toLowerCase());
+
+            if (foundClient) {
+                if (document.getElementById('clientPhone')) document.getElementById('clientPhone').value = foundClient.phone || '';
+                if (document.getElementById('previousDue')) document.getElementById('previousDue').value = foundClient.previousDue || 0;
+                
+                currentClientRates = foundClient.rates || {};
+
+                items.forEach(item => {
+                    if (item.name && currentClientRates[item.name] !== undefined) {
+                        item.rate = currentClientRates[item.name];
+                    }
+                });
+                
+                renderItems();
+                calculateBill();
+                showToast(`Loaded rates for ${foundClient.name}`, "info");
+            }
+        }
+
+        function onProductSelect(itemId, selectedName) {
+            const item = items.find(i => i.id === itemId);
+            if (!item) return;
+
+            item.name = selectedName;
+            
+            if (selectedName && currentClientRates[selectedName] !== undefined) {
+                item.rate = currentClientRates[selectedName];
+            } else {
+                item.rate = 0;
+            }
+
+            renderItems();
+            calculateBill();
+        }
+
         function renderItems() {
             const container = document.getElementById('itemsContainer');
+            if (!container) return;
+
+            if (items.length === 0) {
+                items.push({ id: Date.now(), name: '', qty: 1, rate: 0 });
+            }
+
             container.innerHTML = items.map(item => `
                 <tr class="hover:bg-slate-50/50 transition">
                     <td class="p-2">
@@ -547,7 +475,6 @@ function onProductSelect(itemId, selectedName) {
             const amountPaid = parseFloat(amountPaidInput.value) || 0;
             const balanceDue = Math.max(0, totalPayable - amountPaid);
 
-            // Update Summary Text
             document.getElementById('summarySubtotal').innerText = `₹${subtotal.toFixed(2)}`;
             document.getElementById('summaryPreviousDue').innerText = `+ ₹${previousDue.toFixed(2)}`;
             document.getElementById('summaryTotalPayable').innerText = `₹${totalPayable.toFixed(2)}`;
@@ -578,8 +505,10 @@ function onProductSelect(itemId, selectedName) {
             msg += `📦 *ITEM DETAILS:*\n`;
 
             items.forEach((item, index) => {
-                msg += `${index + 1}. *${item.name}*\n`;
-                msg += `   Qty: ${item.qty} x ₹${item.rate} = ₹${(item.qty * item.rate).toFixed(2)}\n`;
+                if (item.name) {
+                    msg += `${index + 1}. *${item.name}*\n`;
+                    msg += `   Qty: ${item.qty} x ₹${item.rate} = ₹${(item.qty * item.rate).toFixed(2)}\n`;
+                }
             });
 
             msg += `----------------------------------\n`;
@@ -621,13 +550,13 @@ function onProductSelect(itemId, selectedName) {
             };
 
             if (!url) {
-                showToast("Saved in local browser memory (Mock Mode). Connect Google Sheet API URL to post live.", "info");
+                showToast("Connect Google Sheet API URL to post live.", "info");
                 return;
             }
 
             const saveBtn = document.getElementById('saveBtn');
             saveBtn.disabled = true;
-            saveBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Saving to Google Sheet...`;
+            saveBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Saving...`;
 
             try {
                 await fetch(url, {
@@ -647,24 +576,14 @@ function onProductSelect(itemId, selectedName) {
             }
         }
 
-        // Helper UI Functions
         function toggleModal(id) {
-            document.getElementById(id).classList.toggle('hidden');
-        }
-
-        function copyAppsScriptCode() {
-            const text = document.getElementById('appScriptCodeText').innerText;
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-            showToast("Apps Script code copied to clipboard!", "success");
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.toggle('hidden');
         }
 
         function showToast(message, type = "info") {
             const toast = document.getElementById('toast');
+            if (!toast) return;
             toast.innerText = message;
             toast.className = `p-4 rounded-xl text-sm font-medium text-center shadow-lg transition-all duration-300 block ${
                 type === 'success' ? 'bg-emerald-500 text-white' :
