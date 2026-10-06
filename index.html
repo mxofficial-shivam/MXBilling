@@ -378,13 +378,17 @@ function loadSavedScriptUrl() {
 
     showToast("Syncing fresh data from sheet...", "info");
     try {
-        // Force fresh request by appending current timestamp
         const cleanUrl = url.split('?')[0];
         const response = await fetch(`${cleanUrl}?nocache=${Date.now()}`);
         const data = await response.json();
         
+        // Save fresh lists
         clientsData = data.clients || [];
         productsData = data.products || [];
+
+        // Reset current items in table to match new products
+        items = [];
+        addItemRow(); // Re-initialize first row with clean choices
 
         updateDatalists();
         updateStatusBanner(true);
@@ -395,20 +399,28 @@ function loadSavedScriptUrl() {
     }
 }
 
-       function updateDatalists() {
+function updateDatalists() {
+    // Populate client list datalist
     const clientsList = document.getElementById('clientsList');
-    clientsList.innerHTML = clientsData.map(c => `<option value="${c.name || c}">`).join('');
+    if (clientsList) {
+        clientsList.innerHTML = clientsData.map(c => `<option value="${c.name || c}">`).join('');
+    }
 
+    // Populate product datalist fallback
     const productsList = document.getElementById('productsList');
-    productsList.innerHTML = productsData
-        .filter(p => p && (p.name || typeof p === 'string'))
-        .map(p => {
-            const name = typeof p === 'string' ? p : p.name;
-            return `<option value="${name}">`;
-        })
-        .join('');
-}
+    if (productsList) {
+        productsList.innerHTML = productsData
+            .filter(p => p && (p.name || typeof p === 'string'))
+            .map(p => {
+                const name = typeof p === 'string' ? p : p.name;
+                return `<option value="${name}">${name}</option>`;
+            })
+            .join('');
+    }
 
+    // Force re-render of item rows in table
+    renderItems();
+}
         function onClientSelect() {
             const selectedName = document.getElementById('clientNameInput').value.trim();
             const foundClient = clientsData.find(c => c.name.toLowerCase() === selectedName.toLowerCase());
