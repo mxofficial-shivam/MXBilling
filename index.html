@@ -423,16 +423,18 @@ function updateDatalists() {
     renderItems();
 }
         function onClientSelect() {
-            const selectedName = document.getElementById('clientNameInput').value.trim();
-            const foundClient = clientsData.find(c => c.name.toLowerCase() === selectedName.toLowerCase());
+    const selectedName = document.getElementById('clientNameInput').value.trim();
+    if (!selectedName) return;
 
-            if (foundClient) {
-                document.getElementById('clientPhone').value = foundClient.phone || '';
-                document.getElementById('previousDue').value = foundClient.previousDue || 0;
-                calculateBill();
-                showToast(`Loaded details for ${foundClient.name}`, "info");
-            }
-        }
+    const foundClient = clientsData.find(c => c.name && c.name.toLowerCase() === selectedName.toLowerCase());
+
+    if (foundClient) {
+        document.getElementById('clientPhone').value = foundClient.phone || '';
+        document.getElementById('previousDue').value = foundClient.previousDue || 0;
+        calculateBill();
+        showToast(`Loaded details for ${foundClient.name}`, "info");
+    }
+}
 
         function onProductSelect(id, name) {
             const item = items.find(i => i.id === id);
