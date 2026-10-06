@@ -221,9 +221,10 @@
             loadSavedScriptUrl();
         };
 
-        function getScriptUrl() {
-            return localStorage.getItem('quickbill_script_url') || '';
-        }
+       function getScriptUrl() {
+    const defaultUrl = 'https://script.google.com/macros/s/AKfycbxHLejdbat04Uf-146TM9df_8PZf0VbgFhEaPh0pw6UPLNBQWMffdbZGRLRAnFvcTcq/exec';
+    return localStorage.getItem('quickbill_script_url') || defaultUrl;
+}
 
         function loadSavedScriptUrl() {
             const url = getScriptUrl();
