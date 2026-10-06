@@ -288,6 +288,7 @@ function doPost(e) {
     <!-- JavaScript Application Logic -->
     <script>
         // Version 1.0.5 - Cache Busting Update
+        let currentClientRates = {};
         let items = [];
         let clientsData = [];
         let productsData = [];
@@ -376,43 +377,39 @@ function loadSavedScriptUrl() {
         async function fetchSheetData() {
     const url = getScriptUrl();
     if (!url) {
-        showToast("No Google Apps Script URL configured.", "error");
+        if (typeof showToast === 'function') showToast("No Google Apps Script URL configured.", "error");
         return;
     }
 
-    showToast("Syncing fresh data from sheet...", "info");
+    if (typeof showToast === 'function') showToast("Syncing fresh data from sheet...", "info");
     try {
         const cleanUrl = url.split('?')[0];
         const cacheBusterUrl = `${cleanUrl}?t=${Date.now()}`;
 
-        const response = await fetch(cacheBusterUrl, {
-            method: 'GET',
-            redirect: 'follow'
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
+        const response = await fetch(cacheBusterUrl, { method: 'GET', redirect: 'follow' });
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
         const data = await response.json();
-
-        if (data.error) {
-            throw new Error(data.error);
-        }
+        if (data.error) throw new Error(data.error);
 
         clientsData = data.clients || [];
         productsData = data.products || [];
 
-        // Safely call helper functions if they exist in your script
-        if (typeof updateDatalists === 'function') updateDatalists();
-        if (typeof renderItems === 'function') renderItems();
-        if (typeof updateStatusBanner === 'function') updateStatusBanner(true);
+        // Re-initialize item rows if items array exists
+        if (Array.isArray(items)) {
+            items = [];
+            if (typeof addItemRow === 'function') {
+                addItemRow();
+            }
+        }
 
-        showToast("Synced latest clients & rates successfully!", "success");
+        if (typeof updateDatalists === 'function') updateDatalists();
+        if (typeof updateStatusBanner === 'function') updateStatusBanner(true);
+        if (typeof showToast === 'function') showToast("Synced latest clients & rates successfully!", "success");
 
     } catch (err) {
         console.error("Fetch Error:", err);
-        showToast(`Sync Failed: ${err.message || 'Check URL/Network'}`, "error");
+        if (typeof showToast === 'function') showToast(`Sync Failed: ${err.message || 'Check Network'}`, "error");
     }
 }
 
@@ -450,22 +447,20 @@ function onClientSelect() {
     const foundClient = clientsData.find(c => c.name && c.name.toLowerCase() === selectedName.toLowerCase());
 
     if (foundClient) {
-        document.getElementById('clientPhone').value = foundClient.phone || '';
-        document.getElementById('previousDue').value = foundClient.previousDue || 0;
+        if (document.getElementById('clientPhone')) document.getElementById('clientPhone').value = foundClient.phone || '';
+        if (document.getElementById('previousDue')) document.getElementById('previousDue').value = foundClient.previousDue || 0;
         
-        // Store selected client's rates
         currentClientRates = foundClient.rates || {};
 
-        // Update rates for any items already added in the bill table
         items.forEach(item => {
             if (item.name && currentClientRates[item.name] !== undefined) {
                 item.rate = currentClientRates[item.name];
+                item.amount = (item.quantity || 1) * item.rate;
             }
         });
         
-        renderItems();
-        calculateBill();
-        showToast(`Loaded details & rates for ${foundClient.name}`, "info");
+        if (typeof renderItems === 'function') renderItems();
+        if (typeof showToast === 'function') showToast(`Loaded rates for ${foundClient.name}`, "info");
     }
 }
 
@@ -475,15 +470,16 @@ function onProductSelect(itemId, selectedName) {
 
     item.name = selectedName;
     
-    // Auto-fetch rate for selected client, default to 0 if not found
+    // Auto-assign rate from current selected client, default to 0
     if (selectedName && currentClientRates[selectedName] !== undefined) {
         item.rate = currentClientRates[selectedName];
     } else {
         item.rate = 0;
     }
 
-    renderItems();
-    calculateBill();
+    item.amount = (item.quantity || 1) * (item.rate || 0);
+    if (typeof renderItems === 'function') renderItems();
+    if (typeof calculateBill === 'function') calculateBill();
 }
 
         function removeItemRow(id) {
