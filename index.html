@@ -246,350 +246,323 @@ input[type=number] {
 
     <!-- JavaScript Application Logic -->
     <script>
-        let selectedDeliveryDate = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    let currentClientRates = {};
+    let items = [];
+    let clientsData = [];
+    let productsData = [];
+    let selectedDeliveryDate = new Date().toISOString().split('T')[0];
 
-// Call this inside window.onload or page init
-function initDeliveryDate() {
-    handleDeliveryDateChange();
-}
+    window.onload = function() {
+        initDeliveryDate();
+        loadSavedScriptUrl();
+    };
 
-function handleDeliveryDateChange() {
-    const option = document.getElementById('deliveryDateOption').value;
-    const datePicker = document.getElementById('customDatePicker');
-    const today = new Date();
-
-    if (option === 'today') {
-        datePicker.classList.add('hidden');
-        selectedDeliveryDate = formatDate(today);
-    } else if (option === 'yesterday') {
-        datePicker.classList.add('hidden');
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        selectedDeliveryDate = formatDate(yesterday);
-    } else if (option === 'custom') {
-        datePicker.classList.remove('hidden');
-        if (!datePicker.value) {
-            datePicker.value = formatDate(today);
-        }
-        selectedDeliveryDate = datePicker.value;
+    // --- Delivery Date Management ---
+    function initDeliveryDate() {
+        handleDeliveryDateChange();
     }
 
-    updateDateDisplay();
-}
+    function handleDeliveryDateChange() {
+        const option = document.getElementById('deliveryDateOption')?.value || 'today';
+        const datePicker = document.getElementById('customDatePicker');
+        const today = new Date();
 
-function updateSelectedDate() {
-    const pickerValue = document.getElementById('customDatePicker').value;
-    if (pickerValue) {
-        selectedDeliveryDate = pickerValue;
+        if (option === 'today') {
+            if (datePicker) datePicker.classList.add('hidden');
+            selectedDeliveryDate = formatDate(today);
+        } else if (option === 'yesterday') {
+            if (datePicker) datePicker.classList.add('hidden');
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            selectedDeliveryDate = formatDate(yesterday);
+        } else if (option === 'custom') {
+            if (datePicker) {
+                datePicker.classList.remove('hidden');
+                if (!datePicker.value) {
+                    datePicker.value = formatDate(today);
+                }
+                selectedDeliveryDate = datePicker.value;
+            }
+        }
         updateDateDisplay();
     }
-}
 
-function formatDate(dateObj) {
-    const yyyy = dateObj.getFullYear();
-    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const dd = String(dateObj.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-}
-
-function updateDateDisplay() {
-    const display = document.getElementById('selectedDateDisplay');
-    if (display) {
-        display.innerHTML = `<i class="fa-regular fa-calendar-check mr-1"></i> ${selectedDeliveryDate}`;
+    function updateSelectedDate() {
+        const pickerValue = document.getElementById('customDatePicker')?.value;
+        if (pickerValue) {
+            selectedDeliveryDate = pickerValue;
+            updateDateDisplay();
+        }
     }
-}
-        let currentClientRates = {};
-        let items = [];
-        let clientsData = [];
-        let productsData = [];
 
-        window.onload = function() {
-    loadSavedScriptUrl();
-    initDeliveryDate();
-};
+    function formatDate(dateObj) {
+        const yyyy = dateObj.getFullYear();
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(dateObj.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
 
-       function getScriptUrl() {
-    const defaultUrl = 'https://script.google.com/macros/s/AKfycbxHLejdbat04Uf-146TM9df_8PZf0VbgFhEaPh0pw6UPLNBQWMffdbZGRLRAnFvcTcq/exec';
-    return localStorage.getItem('quickbill_script_url') || defaultUrl;
-}
-
-        function loadSavedScriptUrl() {
-            const url = getScriptUrl();
-            document.getElementById('scriptUrlInput').value = url;
-            if (url) {
-                fetchSheetData();
-            } else {
-                useMockData();
-            }
+    function updateDateDisplay() {
+        const display = document.getElementById('selectedDateDisplay');
+        if (display) {
+            display.innerHTML = `<i class="fa-regular fa-calendar-check mr-1"></i> ${selectedDeliveryDate}`;
         }
+    }
 
-        function saveScriptUrl() {
-            const url = document.getElementById('scriptUrlInput').value.trim();
-            if (url) {
-                localStorage.setItem('quickbill_script_url', url);
-                toggleModal('setupModal');
-                fetchSheetData();
-            }
+    // --- Modal Management ---
+    function toggleModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.toggle('hidden');
         }
+    }
 
-        function clearScriptUrl() {
-            localStorage.removeItem('quickbill_script_url');
-            document.getElementById('scriptUrlInput').value = '';
-            toggleModal('setupModal');
+    // --- URL & API Settings ---
+    function getScriptUrl() {
+        return localStorage.getItem('quickbill_script_url') || '';
+    }
+
+    function loadSavedScriptUrl() {
+        const url = getScriptUrl();
+        const input = document.getElementById('scriptUrlInput');
+        if (input) input.value = url;
+        
+        if (url) {
+            fetchSheetData();
+        } else {
             useMockData();
-            showToast("Reset to Mock Data", "info");
+        }
+    }
+
+    function saveScriptUrl() {
+        const input = document.getElementById('scriptUrlInput');
+        const url = input ? input.value.trim() : '';
+        if (url) {
+            localStorage.setItem('quickbill_script_url', url);
+            toggleModal('setupModal');
+            fetchSheetData();
+        } else {
+            showToast("Please enter a valid Apps Script Web App URL", "error");
+        }
+    }
+
+    function clearScriptUrl() {
+        localStorage.removeItem('quickbill_script_url');
+        const input = document.getElementById('scriptUrlInput');
+        if (input) input.value = '';
+        toggleModal('setupModal');
+        useMockData();
+        showToast("Reset to Mock Data", "info");
+    }
+
+    // --- Data Sync ---
+    function useMockData() {
+        clientsData = [
+            { name: "Yummy Section", phone: "9876543210", previousDue: 450, rates: { "Mix Veg Momo": 3.5, "Paneer": 4.5 } },
+            { name: "Hunger Station", phone: "9123456789", previousDue: 0, rates: { "Mix Veg Momo": 4, "Paneer": 6 } }
+        ];
+        productsData = [
+            { name: "Mix Veg Momo", rate: 0 },
+            { name: "Paneer", rate: 0 }
+        ];
+        items = [];
+        addItemRow();
+        updateDatalists();
+        updateStatusBanner(false);
+    }
+
+    function updateStatusBanner(isConnected) {
+        const banner = document.getElementById('connectionStatus');
+        if (!banner) return;
+
+        if (isConnected) {
+            banner.className = "mb-5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between";
+            banner.innerHTML = `
+                <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>Connected live to Google Sheet database.</span>
+                </span>
+                <button onclick="fetchSheetData()" id="syncBtn" class="px-2.5 py-1 bg-emerald-200 hover:bg-emerald-300 rounded-md font-semibold text-emerald-900 transition flex items-center gap-1">
+                    <i class="fa-solid fa-rotate"></i> Sync
+                </button>
+            `;
+        } else {
+            banner.className = "mb-5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between";
+            banner.innerHTML = `
+                <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span>Currently running in <strong>Mock Mode</strong>. Connect Google Sheet in Settings.</span>
+                </span>
+                <button onclick="toggleModal('setupModal')" class="px-2.5 py-1 bg-amber-200 hover:bg-amber-300 rounded-md font-semibold text-amber-900 transition flex items-center gap-1">
+                    <i class="fa-solid fa-plug"></i> Connect
+                </button>
+            `;
+        }
+    }
+
+    async function fetchSheetData() {
+        const url = getScriptUrl();
+        if (!url) {
+            showToast("No Google Apps Script URL configured.", "error");
+            useMockData();
+            return;
         }
 
-        function useMockData() {
-            clientsData = [
-                { name: "Yummy Section", phone: "9876543210", previousDue: 450, rates: { "Mix Veg Momo": 3.5, "Paneer": 4.5 } },
-                { name: "Hunger Station", phone: "9123456789", previousDue: 0, rates: { "Mix Veg Momo": 4, "Paneer": 6 } }
-            ];
-            productsData = [
-                { name: "Mix Veg Momo", rate: 0 },
-                { name: "Paneer", rate: 0 }
-            ];
+        showToast("Syncing fresh data from sheet...", "info");
+        try {
+            const cleanUrl = url.split('?')[0];
+            const cacheBusterUrl = `${cleanUrl}?t=${Date.now()}`;
+
+            const response = await fetch(cacheBusterUrl, { method: 'GET', redirect: 'follow' });
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
+            clientsData = data.clients || [];
+            productsData = data.products || [];
+
             items = [];
             addItemRow();
+
             updateDatalists();
+            updateStatusBanner(true);
+            showToast("Synced latest clients & rates successfully!", "success");
+
+        } catch (err) {
+            console.error("Fetch Error:", err);
+            showToast(`Sync Failed: ${err.message || 'Check Network'}`, "error");
             updateStatusBanner(false);
         }
+    }
 
-        function updateStatusBanner(isConnected) {
-            const banner = document.getElementById('connectionStatus');
-            if (isConnected) {
-                banner.className = "mb-5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between";
-                banner.innerHTML = `
-                    <span class="flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        <span>Connected live to Google Sheet database.</span>
-                    </span>
-                    <button onclick="fetchSheetData()" id="syncBtn" class="px-2.5 py-1 bg-emerald-200 hover:bg-emerald-300 rounded-md font-semibold text-emerald-900 transition flex items-center gap-1">
-                        <i class="fa-solid fa-rotate"></i> Sync
-                    </button>
-                `;
-            } else {
-                banner.className = "mb-5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between";
-                banner.innerHTML = `
-                    <span class="flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                        <span>Currently running in <strong>Mock Mode</strong>. Connect Google Sheet in Settings.</span>
-                    </span>
-                    <button onclick="toggleModal('setupModal')" class="px-2.5 py-1 bg-amber-200 hover:bg-amber-300 rounded-md font-semibold text-amber-900 transition flex items-center gap-1">
-                        <i class="fa-solid fa-plug"></i> Connect
-                    </button>
-                `;
-            }
+    function updateDatalists() {
+        const clientsList = document.getElementById('clientsList');
+        if (clientsList) {
+            clientsList.innerHTML = clientsData.map(c => `<option value="${c.name || c}">`).join('');
         }
 
-        function addItemRow() {
-            const newItem = {
-                id: Date.now() + Math.random(),
-                name: '',
-                qty: 1,
-                rate: 0
-            };
-            items.push(newItem);
-            renderItems();
+        const productsList = document.getElementById('productsList');
+        if (productsList) {
+            productsList.innerHTML = productsData
+                .filter(p => p && (p.name || typeof p === 'string'))
+                .map(p => {
+                    const name = typeof p === 'string' ? p : p.name;
+                    return `<option value="${name}">${name}</option>`;
+                })
+                .join('');
         }
 
-        function removeItemRow(id) {
-            if (items.length <= 1) {
-                showToast("Invoice must contain at least one product", "error");
-                return;
-            }
-            items = items.filter(item => item.id !== id);
-            renderItems();
+        renderItems();
+    }
+
+    // --- Item & Row Logic ---
+    function addItemRow() {
+        items.push({ id: Date.now() + Math.random(), name: '', qty: 1, rate: 0 });
+        renderItems();
+    }
+
+    function removeItemRow(id) {
+        if (items.length <= 1) {
+            showToast("Invoice must contain at least one product", "error");
+            return;
+        }
+        items = items.filter(item => item.id !== id);
+        renderItems();
+        calculateBill();
+    }
+
+    function renderItems() {
+        const container = document.getElementById('itemsContainer');
+        if (!container) return;
+
+        if (items.length === 0) {
+            items.push({ id: Date.now(), name: '', qty: 1, rate: 0 });
+        }
+
+        container.innerHTML = items.map(item => `
+            <tr class="hover:bg-slate-50/50 transition">
+                <td class="p-2">
+                    <input list="productsList" value="${item.name}" onchange="onProductSelect(${item.id}, this.value)" placeholder="Select or type item" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
+                </td>
+                <td class="p-2">
+                    <input type="number" min="1" value="${item.qty}" onchange="updateItem(${item.id}, 'qty', this.value)" onfocus="this.select()" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
+                </td>
+                <td class="p-2">
+                    <input type="number" min="0" value="${item.rate}" onchange="updateItem(${item.id}, 'rate', this.value)" onfocus="this.select()" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
+                </td>
+                <td class="p-2 font-semibold text-slate-700">
+                    ₹${(item.qty * item.rate).toFixed(2)}
+                </td>
+                <td class="p-2 text-center">
+                    <button onclick="removeItemRow(${item.id})" class="text-slate-400 hover:text-red-500 p-1 transition">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function updateItem(id, field, value) {
+        const item = items.find(i => i.id === id);
+        if (item) {
+            item[field] = field === 'name' ? value : Math.max(0, parseFloat(value) || 0);
             calculateBill();
         }
+    }
 
-        async function fetchSheetData() {
-            const url = getScriptUrl();
-            if (!url) {
-                showToast("No Google Apps Script URL configured.", "error");
-                useMockData();
-                return;
-            }
-
-            showToast("Syncing fresh data from sheet...", "info");
-            try {
-                const cleanUrl = url.split('?')[0];
-                const cacheBusterUrl = `${cleanUrl}?t=${Date.now()}`;
-
-                const response = await fetch(cacheBusterUrl, { method: 'GET', redirect: 'follow' });
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-
-                const data = await response.json();
-                if (data.error) throw new Error(data.error);
-
-                clientsData = data.clients || [];
-                productsData = data.products || [];
-
-                items = [];
-                addItemRow();
-
-                updateDatalists();
-                updateStatusBanner(true);
-                showToast("Synced latest clients & rates successfully!", "success");
-
-            } catch (err) {
-                console.error("Fetch Error:", err);
-                showToast(`Sync Failed: ${err.message || 'Check Network'}`, "error");
-                updateStatusBanner(false);
-            }
+    function onClientSelect() {
+        const selectedName = document.getElementById('clientNameInput')?.value.trim();
+        if (!selectedName) {
+            currentClientRates = {};
+            return;
         }
 
-        function updateDatalists() {
-            const clientsList = document.getElementById('clientsList');
-            if (clientsList) {
-                clientsList.innerHTML = clientsData.map(c => `<option value="${c.name || c}">`).join('');
-            }
+        const foundClient = clientsData.find(c => c.name && c.name.toLowerCase() === selectedName.toLowerCase());
 
-            const productsList = document.getElementById('productsList');
-            if (productsList) {
-                productsList.innerHTML = productsData
-                    .filter(p => p && (p.name || typeof p === 'string'))
-                    .map(p => {
-                        const name = typeof p === 'string' ? p : p.name;
-                        return `<option value="${name}">${name}</option>`;
-                    })
-                    .join('');
-            }
-
-            renderItems();
-        }
-
-        function onClientSelect() {
-            const selectedName = document.getElementById('clientNameInput').value.trim();
-            if (!selectedName) {
-                currentClientRates = {};
-                return;
-            }
-
-            const foundClient = clientsData.find(c => c.name && c.name.toLowerCase() === selectedName.toLowerCase());
-
-            if (foundClient) {
-                if (document.getElementById('clientPhone')) document.getElementById('clientPhone').value = foundClient.phone || '';
-                if (document.getElementById('previousDue')) document.getElementById('previousDue').value = foundClient.previousDue || 0;
-                
-                currentClientRates = foundClient.rates || {};
-
-                items.forEach(item => {
-                    if (item.name && currentClientRates[item.name] !== undefined) {
-                        item.rate = currentClientRates[item.name];
-                    }
-                });
-                
-                renderItems();
-                calculateBill();
-                showToast(`Loaded rates for ${foundClient.name}`, "info");
-            }
-        }
-
-        function onProductSelect(itemId, selectedName) {
-            const item = items.find(i => i.id === itemId);
-            if (!item) return;
-
-            item.name = selectedName;
+        if (foundClient) {
+            if (document.getElementById('clientPhone')) document.getElementById('clientPhone').value = foundClient.phone || '';
+            if (document.getElementById('previousDue')) document.getElementById('previousDue').value = foundClient.previousDue || 0;
             
-            if (selectedName && currentClientRates[selectedName] !== undefined) {
-                item.rate = currentClientRates[selectedName];
-            } else {
-                item.rate = 0;
-            }
+            currentClientRates = foundClient.rates || {};
 
+            items.forEach(item => {
+                if (item.name && currentClientRates[item.name] !== undefined) {
+                    item.rate = currentClientRates[item.name];
+                }
+            });
+            
             renderItems();
             calculateBill();
+            showToast(`Loaded rates for ${foundClient.name}`, "info");
         }
+    }
 
-        // function renderItems() {
-        //     // 1. Remember focused input details before render
-        //     const activeEl = document.activeElement;
-        //     const activeId = activeEl ? activeEl.dataset?.fieldId : null;
-        //     const selectionStart = activeEl?.selectionStart;
+    function onProductSelect(itemId, selectedName) {
+        const item = items.find(i => i.id === itemId);
+        if (!item) return;
+
+        item.name = selectedName;
         
-        //     const container = document.getElementById('itemsContainer');
-        //     container.innerHTML = items.map(item => `
-        //         <tr class="hover:bg-slate-50/50 transition">
-        //             <td class="p-2">
-        //                 <input data-field-id="${item.id}-name" list="productsList" value="${(item.name)}" onchange="onProductSelect(${item.id}, this.value)" placeholder="Select or type item" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
-        //             </td>
-        //             <td class="p-2">
-        //                 <input data-field-id="${item.id}-qty" type="number" min="1" value="${item.qty}" oninput="updateItem(${item.id}, 'qty', this.value)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
-        //             </td>
-        //             <td class="p-2">
-        //                 <input data-field-id="${item.id}-rate" type="number" min="0" value="${item.rate}" oninput="updateItem(${item.id}, 'rate', this.value)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
-        //             </td>
-        //             <td class="p-2 font-semibold text-slate-700">
-        //                 ₹${(item.qty * item.rate).toFixed(2)}
-        //             </td>
-        //             <td class="p-2 text-center">
-        //                 <button onclick="removeItemRow(${item.id})" class="text-slate-400 hover:text-red-500 p-1 transition">
-        //                     <i class="fa-solid fa-trash-can"></i>
-        //                 </button>
-        //             </td>
-        //         </tr>
-        //     `).join('');
+        if (selectedName && currentClientRates[selectedName] !== undefined) {
+            item.rate = currentClientRates[selectedName];
+        } else {
+            item.rate = 0;
+        }
+
+        renderItems();
+        calculateBill();
+    }
+
+    function calculateBill() {
+        const subtotal = items.reduce((sum, item) => sum + (item.qty * item.rate), 0);
+        const previousDue = parseFloat(document.getElementById('previousDue')?.value) || 0;
+        const totalPayable = subtotal + previousDue;
         
-        //     // 2. Restore focus after render
-        //     if (activeId) {
-        //         const inputToFocus = container.querySelector(`[data-field-id="${activeId}"]`);
-        //         if (inputToFocus) {
-        //             inputToFocus.focus();
-        //             if (selectionStart !== null && inputToFocus.type === 'text') {
-        //                 inputToFocus.setSelectionRange(selectionStart, selectionStart);
-        //             }
-        //         }
-        //     }
-        // }
-        function renderItems() {
-            const container = document.getElementById('itemsContainer');
-            if (!container) return;
+        const status = document.getElementById('paymentStatus')?.value || 'Pending';
+        let amountPaidInput = document.getElementById('amountPaid');
 
-            if (items.length === 0) {
-                items.push({ id: Date.now(), name: '', qty: 1, rate: 0 });
-            }
-
-            container.innerHTML = items.map(item => `
-                <tr class="hover:bg-slate-50/50 transition">
-                    <td class="p-2">
-                        <input list="productsList" value="${item.name}" onchange="onProductSelect(${item.id}, this.value)" placeholder="Select or type item" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
-                    </td>
-                    <td class="p-2">
-                        <input type="number" min="1" value="${item.qty}" oninput="updateItem(${item.id}, 'qty', this.value)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
-                    </td>
-                    <td class="p-2">
-                        <input type="number" min="0" value="${item.rate}" oninput="updateItem(${item.id}, 'rate', this.value)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
-                    </td>
-                    <td class="p-2 font-semibold text-slate-700">
-                        ₹${(item.qty * item.rate).toFixed(2)}
-                    </td>
-                    <td class="p-2 text-center">
-                        <button onclick="removeItemRow(${item.id})" class="text-slate-400 hover:text-red-500 p-1 transition">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function updateItem(id, field, value) {
-            const item = items.find(i => i.id === id);
-            if (item) {
-                item[field] = field === 'name' ? value : Math.max(0, parseFloat(value) || 0);
-                renderItems();
-                calculateBill();
-            }
-        }
-
-        function calculateBill() {
-            const subtotal = items.reduce((sum, item) => sum + (item.qty * item.rate), 0);
-            const previousDue = parseFloat(document.getElementById('previousDue').value) || 0;
-            const totalPayable = subtotal + previousDue;
-            
-            const status = document.getElementById('paymentStatus').value;
-            let amountPaidInput = document.getElementById('amountPaid');
-
+        if (amountPaidInput) {
             if (status === 'Paid') {
                 amountPaidInput.value = totalPayable;
                 amountPaidInput.disabled = true;
@@ -599,134 +572,130 @@ function updateDateDisplay() {
             } else {
                 amountPaidInput.disabled = false;
             }
-
-            const amountPaid = parseFloat(amountPaidInput.value) || 0;
-            const balanceDue = Math.max(0, totalPayable - amountPaid);
-
-            document.getElementById('summarySubtotal').innerText = `₹${subtotal.toFixed(2)}`;
-            document.getElementById('summaryPreviousDue').innerText = `+ ₹${previousDue.toFixed(2)}`;
-            document.getElementById('summaryTotalPayable').innerText = `₹${totalPayable.toFixed(2)}`;
-            document.getElementById('summaryAmountPaid').innerText = `- ₹${amountPaid.toFixed(2)}`;
-            document.getElementById('summaryBalanceDue').innerText = `₹${balanceDue.toFixed(2)}`;
-
-            return { subtotal, previousDue, totalPayable, amountPaid, balanceDue, status };
         }
 
-        function handleStatusChange() {
-            calculateBill();
-        }
+        const amountPaid = parseFloat(amountPaidInput?.value) || 0;
+        const balanceDue = Math.max(0, totalPayable - amountPaid);
 
-        function sendWhatsAppInvoice() {
-            const name = document.getElementById('clientNameInput').value.trim();
-            const phone = document.getElementById('clientPhone').value.trim();
+        if (document.getElementById('summarySubtotal')) document.getElementById('summarySubtotal').innerText = `₹${subtotal.toFixed(2)}`;
+        if (document.getElementById('summaryPreviousDue')) document.getElementById('summaryPreviousDue').innerText = `+ ₹${previousDue.toFixed(2)}`;
+        if (document.getElementById('summaryTotalPayable')) document.getElementById('summaryTotalPayable').innerText = `₹${totalPayable.toFixed(2)}`;
+        if (document.getElementById('summaryAmountPaid')) document.getElementById('summaryAmountPaid').innerText = `- ₹${amountPaid.toFixed(2)}`;
+        if (document.getElementById('summaryBalanceDue')) document.getElementById('summaryBalanceDue').innerText = `₹${balanceDue.toFixed(2)}`;
 
-            if (!name || !phone) {
-                showToast("Please enter Client Name and Phone Number!", "error");
-                return;
-            }
-
-            const calc = calculateBill();
-            let msg = `🧾 *INVOICE / BILL STATEMENT*\n`;
-            msg += `📅 *Date:* ${new Date().toLocaleDateString()}\n`;
-            msg += `👤 *Client Name:* ${name}\n`;
-            msg += `----------------------------------\n`;
-            msg += `📦 *ITEM DETAILS:*\n`;
-
-            items.forEach((item, index) => {
-                if (item.name) {
-                    msg += `${index + 1}. *${item.name}*\n`;
-                    msg += `   Qty: ${item.qty} x ₹${item.rate} = ₹${(item.qty * item.rate).toFixed(2)}\n`;
-                }
-            });
-
-            msg += `----------------------------------\n`;
-            msg += `💵 *Subtotal:* ₹${calc.subtotal.toFixed(2)}\n`;
-            if (calc.previousDue > 0) {
-                msg += `📌 *Previous Due:* ₹${calc.previousDue.toFixed(2)}\n`;
-            }
-            msg += `💰 *Total Payable:* ₹${calc.totalPayable.toFixed(2)}\n`;
-            msg += `💳 *Amount Paid:* ₹${calc.amountPaid.toFixed(2)}\n`;
-            msg += `🔴 *Balance Due:* ₹${calc.balanceDue.toFixed(2)}\n`;
-            msg += `📊 *Status:* ${calc.status.toUpperCase()}\n`;
-            msg += `----------------------------------\n`;
-            msg += `Thank you for your business! 🙏`;
-
-            const cleanPhone = phone.replace(/\D/g, '');
-            const fullPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
-            const encodedUrl = `https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`;
-
-            window.open(encodedUrl, '_blank');
-            showToast("Opening WhatsApp...", "success");
-        }
-
-        async function saveEntryToSheet() {
-    const name = document.getElementById('clientNameInput').value.trim();
-    const phone = document.getElementById('clientPhone').value.trim();
-
-    if (!name || !phone) {
-        showToast("Please fill in Client Name & Phone!", "error");
-        return;
+        return { subtotal, previousDue, totalPayable, amountPaid, balanceDue, status };
     }
 
-    const url = getScriptUrl();
-    const calc = calculateBill();
-    
-    // Updated payload including deliveryDate
-    const payload = {
-        deliveryDate: selectedDeliveryDate, // Saved format YYYY-MM-DD
-        clientName: name,
-        clientPhone: phone,
-        items: items,
-        ...calc
-    };
+    function handleStatusChange() {
+        calculateBill();
+    }
 
-    // ... rest of your save fetch logic ...
-}
+    // --- Save & WhatsApp Actions ---
+    function sendWhatsAppInvoice() {
+        const name = document.getElementById('clientNameInput')?.value.trim();
+        const phone = document.getElementById('clientPhone')?.value.trim();
 
-            if (!url) {
-                showToast("Connect Google Sheet API URL to post live.", "info");
-                return;
+        if (!name || !phone) {
+            showToast("Please enter Client Name and Phone Number!", "error");
+            return;
+        }
+
+        const calc = calculateBill();
+        let msg = `🧾 *INVOICE / BILL STATEMENT*\n`;
+        msg += `📅 *Delivery Date:* ${selectedDeliveryDate}\n`;
+        msg += `👤 *Client Name:* ${name}\n`;
+        msg += `----------------------------------\n`;
+        msg += `📦 *ITEM DETAILS:*\n`;
+
+        items.forEach((item, index) => {
+            if (item.name) {
+                msg += `${index + 1}. *${item.name}*\n`;
+                msg += `   Qty: ${item.qty} x ₹${item.rate} = ₹${(item.qty * item.rate).toFixed(2)}\n`;
             }
+        });
 
-            const saveBtn = document.getElementById('saveBtn');
+        msg += `----------------------------------\n`;
+        msg += `💵 *Subtotal:* ₹${calc.subtotal.toFixed(2)}\n`;
+        if (calc.previousDue > 0) {
+            msg += `📌 *Previous Due:* ₹${calc.previousDue.toFixed(2)}\n`;
+        }
+        msg += `💰 *Total Payable:* ₹${calc.totalPayable.toFixed(2)}\n`;
+        msg += `💳 *Amount Paid:* ₹${calc.amountPaid.toFixed(2)}\n`;
+        msg += `🔴 *Balance Due:* ₹${calc.balanceDue.toFixed(2)}\n`;
+        msg += `📊 *Status:* ${calc.status.toUpperCase()}\n`;
+        msg += `----------------------------------\n`;
+        msg += `Thank you for your business! 🙏`;
+
+        const cleanPhone = phone.replace(/\D/g, '');
+        const fullPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
+        const encodedUrl = `https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`;
+
+        window.open(encodedUrl, '_blank');
+        showToast("Opening WhatsApp...", "success");
+    }
+
+    async function saveEntryToSheet() {
+        const name = document.getElementById('clientNameInput')?.value.trim();
+        const phone = document.getElementById('clientPhone')?.value.trim();
+
+        if (!name || !phone) {
+            showToast("Please fill in Client Name & Phone!", "error");
+            return;
+        }
+
+        const url = getScriptUrl();
+        const calc = calculateBill();
+        const payload = {
+            deliveryDate: selectedDeliveryDate,
+            clientName: name,
+            clientPhone: phone,
+            items: items,
+            ...calc
+        };
+
+        if (!url) {
+            showToast("Connect Google Sheet API URL to post live.", "info");
+            return;
+        }
+
+        const saveBtn = document.getElementById('saveBtn');
+        if (saveBtn) {
             saveBtn.disabled = true;
             saveBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Saving...`;
+        }
 
-            try {
-                await fetch(url, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+        try {
+            await fetch(url, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-                showToast("Bill entry posted to Google Sheet!", "success");
-            } catch (err) {
-                console.error(err);
-                showToast("Error saving to Google Sheet", "error");
-            } finally {
+            showToast("Bill entry posted to Google Sheet!", "success");
+        } catch (err) {
+            console.error(err);
+            showToast("Error saving to Google Sheet", "error");
+        } finally {
+            if (saveBtn) {
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Save Entry to Google Sheet`;
             }
         }
+    }
 
-        function toggleModal(id) {
-            const modal = document.getElementById(id);
-            if (modal) modal.classList.toggle('hidden');
-        }
-
-        function showToast(message, type = "info") {
-            const toast = document.getElementById('toast');
-            if (!toast) return;
-            toast.innerText = message;
-            toast.className = `p-4 rounded-xl text-sm font-medium text-center shadow-lg transition-all duration-300 block ${
-                type === 'success' ? 'bg-emerald-500 text-white' :
-                type === 'error' ? 'bg-red-500 text-white' : 'bg-slate-800 text-slate-100'
-            }`;
-            setTimeout(() => {
-                toast.className = "hidden";
-            }, 3500);
-        }
-    </script>
+    function showToast(message, type = "info") {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.innerText = message;
+        toast.className = `p-4 rounded-xl text-sm font-medium text-center shadow-lg transition-all duration-300 block ${
+            type === 'success' ? 'bg-emerald-500 text-white' :
+            type === 'error' ? 'bg-red-500 text-white' : 'bg-slate-800 text-slate-100'
+        }`;
+        setTimeout(() => {
+            toast.className = "hidden";
+        }, 3500);
+    }
+</script>
 </body>
 </html>
