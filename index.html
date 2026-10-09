@@ -246,14 +246,67 @@ input[type=number] {
 
     <!-- JavaScript Application Logic -->
     <script>
+        let selectedDeliveryDate = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
+// Call this inside window.onload or page init
+function initDeliveryDate() {
+    handleDeliveryDateChange();
+}
+
+function handleDeliveryDateChange() {
+    const option = document.getElementById('deliveryDateOption').value;
+    const datePicker = document.getElementById('customDatePicker');
+    const today = new Date();
+
+    if (option === 'today') {
+        datePicker.classList.add('hidden');
+        selectedDeliveryDate = formatDate(today);
+    } else if (option === 'yesterday') {
+        datePicker.classList.add('hidden');
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        selectedDeliveryDate = formatDate(yesterday);
+    } else if (option === 'custom') {
+        datePicker.classList.remove('hidden');
+        if (!datePicker.value) {
+            datePicker.value = formatDate(today);
+        }
+        selectedDeliveryDate = datePicker.value;
+    }
+
+    updateDateDisplay();
+}
+
+function updateSelectedDate() {
+    const pickerValue = document.getElementById('customDatePicker').value;
+    if (pickerValue) {
+        selectedDeliveryDate = pickerValue;
+        updateDateDisplay();
+    }
+}
+
+function formatDate(dateObj) {
+    const yyyy = dateObj.getFullYear();
+    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateObj.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
+function updateDateDisplay() {
+    const display = document.getElementById('selectedDateDisplay');
+    if (display) {
+        display.innerHTML = `<i class="fa-regular fa-calendar-check mr-1"></i> ${selectedDeliveryDate}`;
+    }
+}
         let currentClientRates = {};
         let items = [];
         let clientsData = [];
         let productsData = [];
 
         window.onload = function() {
-            loadSavedScriptUrl();
-        };
+    loadSavedScriptUrl();
+    initDeliveryDate();
+};
 
        function getScriptUrl() {
     const defaultUrl = 'https://script.google.com/macros/s/AKfycbxHLejdbat04Uf-146TM9df_8PZf0VbgFhEaPh0pw6UPLNBQWMffdbZGRLRAnFvcTcq/exec';
@@ -607,22 +660,28 @@ input[type=number] {
         }
 
         async function saveEntryToSheet() {
-            const name = document.getElementById('clientNameInput').value.trim();
-            const phone = document.getElementById('clientPhone').value.trim();
+    const name = document.getElementById('clientNameInput').value.trim();
+    const phone = document.getElementById('clientPhone').value.trim();
 
-            if (!name || !phone) {
-                showToast("Please fill in Client Name & Phone!", "error");
-                return;
-            }
+    if (!name || !phone) {
+        showToast("Please fill in Client Name & Phone!", "error");
+        return;
+    }
 
-            const url = getScriptUrl();
-            const calc = calculateBill();
-            const payload = {
-                clientName: name,
-                clientPhone: phone,
-                items: items,
-                ...calc
-            };
+    const url = getScriptUrl();
+    const calc = calculateBill();
+    
+    // Updated payload including deliveryDate
+    const payload = {
+        deliveryDate: selectedDeliveryDate, // Saved format YYYY-MM-DD
+        clientName: name,
+        clientPhone: phone,
+        items: items,
+        ...calc
+    };
+
+    // ... rest of your save fetch logic ...
+}
 
             if (!url) {
                 showToast("Connect Google Sheet API URL to post live.", "info");
