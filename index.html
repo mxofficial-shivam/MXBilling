@@ -511,32 +511,42 @@ input[type=number] {
         }
     }
 
-    function onClientSelect() {
-        const selectedName = document.getElementById('clientNameInput')?.value.trim();
-        if (!selectedName) {
-            currentClientRates = {};
-            return;
-        }
-
-        const foundClient = clientsData.find(c => c.name && c.name.toLowerCase() === selectedName.toLowerCase());
-
-        if (foundClient) {
-            if (document.getElementById('clientPhone')) document.getElementById('clientPhone').value = foundClient.phone || '';
-            if (document.getElementById('previousDue')) document.getElementById('previousDue').value = foundClient.previousDue || 0;
-            
-            currentClientRates = foundClient.rates || {};
-
-            items.forEach(item => {
-                if (item.name && currentClientRates[item.name] !== undefined) {
-                    item.rate = currentClientRates[item.name];
-                }
-            });
-            
-            renderItems();
-            calculateBill();
-            showToast(`Loaded rates for ${foundClient.name}`, "info");
-        }
+   function onClientSelect() {
+    const selectedName = document.getElementById('clientNameInput')?.value.trim();
+    if (!selectedName) {
+        currentClientRates = {};
+        if (document.getElementById('previousDue')) document.getElementById('previousDue').value = 0;
+        calculateBill();
+        return;
     }
+
+    const foundClient = clientsData.find(c => c.name && c.name.toLowerCase() === selectedName.toLowerCase());
+
+    if (foundClient) {
+        // Set Phone
+        if (document.getElementById('clientPhone')) {
+            document.getElementById('clientPhone').value = foundClient.phone || '';
+        }
+        
+        // Set Latest Outstanding from Sheet (remains manually editable by user)
+        if (document.getElementById('previousDue')) {
+            document.getElementById('previousDue').value = foundClient.previousDue !== undefined ? foundClient.previousDue : 0;
+        }
+
+        currentClientRates = foundClient.rates || {};
+
+        // Apply client-specific item rates if available
+        items.forEach(item => {
+            if (item.name && currentClientRates[item.name] !== undefined) {
+                item.rate = currentClientRates[item.name];
+            }
+        });
+
+        renderItems();
+        calculateBill(); // Recalculate Total Payable with updated Previous Due
+        showToast(`Loaded details & outstanding due for ${foundClient.name}`, "info");
+    }
+}
 
     function onProductSelect(itemId, selectedName) {
         const item = items.find(i => i.id === itemId);
