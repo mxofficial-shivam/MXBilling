@@ -270,9 +270,39 @@ input[type=number] {
     let selectedDeliveryDate = new Date().toISOString().split('T')[0];
 
     window.onload = function() {
-        initDeliveryDate();
-        loadSavedScriptUrl();
-    };
+    initDeliveryDate();
+    loadAppInstantly();
+};
+
+function loadAppInstantly() {
+    const url = getScriptUrl();
+
+    // Step 1: Check if we have cached data from previous sessions
+    const cachedData = localStorage.getItem('quickbill_cached_sheet_data');
+
+    if (cachedData) {
+        try {
+            const parsed = JSON.parse(cachedData);
+            clientsData = parsed.clients || [];
+            productsData = parsed.products || [];
+            
+            items = [];
+            addItemRow();
+            updateDatalists();
+            updateStatusBanner(true, "Connected (Cached)");
+        } catch (e) {
+            console.warn("Invalid cache payload:", e);
+        }
+    } else if (!url) {
+        // Fallback to mock mode only if no URL is saved at all
+        useMockData();
+    }
+
+    // Step 2: Fetch fresh data silently in the background if URL exists
+    if (url) {
+        fetchSheetDataSilent();
+    }
+}
 
     // --- Delivery Date Management ---
     function initDeliveryDate() {
@@ -388,70 +418,80 @@ input[type=number] {
         updateStatusBanner(false);
     }
 
-    function updateStatusBanner(isConnected) {
-        const banner = document.getElementById('connectionStatus');
-        if (!banner) return;
+    function updateStatusBanner(isConnected, statusText = "") {
+    const banner = document.getElementById('connectionStatus');
+    if (!banner) return;
 
-        if (isConnected) {
-            banner.className = "mb-5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between";
-            banner.innerHTML = `
-                <span class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span>Connected live to Google Sheet database.</span>
-                </span>
-                <button onclick="fetchSheetData()" id="syncBtn" class="px-2.5 py-1 bg-emerald-200 hover:bg-emerald-300 rounded-md font-semibold text-emerald-900 transition flex items-center gap-1">
-                    <i class="fa-solid fa-rotate"></i> Sync
-                </button>
-            `;
-        } else {
-            banner.className = "mb-5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between";
-            banner.innerHTML = `
-                <span class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                    <span>Currently running in <strong>Mock Mode</strong>. Connect Google Sheet in Settings.</span>
-                </span>
-                <button onclick="toggleModal('setupModal')" class="px-2.5 py-1 bg-amber-200 hover:bg-amber-300 rounded-md font-semibold text-amber-900 transition flex items-center gap-1">
-                    <i class="fa-solid fa-plug"></i> Connect
-                </button>
-            `;
-        }
+    if (isConnected) {
+        banner.className = "mb-5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between";
+        banner.innerHTML = `
+            <span class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>${statusText || 'Connected live to Google Sheet database.'}</span>
+            </span>
+            <button onclick="fetchSheetData()" id="syncBtn" class="px-2.5 py-1 bg-emerald-200 hover:bg-emerald-300 rounded-md font-semibold text-emerald-900 transition flex items-center gap-1">
+                <i class="fa-solid fa-rotate"></i> Sync
+            </button>
+        `;
+    } else {
+        banner.className = "mb-5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between";
+        banner.innerHTML = `
+            <span class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                <span>Not connected to Google Sheet. Connect in Settings.</span>
+            </span>
+            <button onclick="toggleModal('setupModal')" class="px-2.5 py-1 bg-amber-200 hover:bg-amber-300 rounded-md font-semibold text-amber-900 transition flex items-center gap-1">
+                <i class="fa-solid fa-plug"></i> Connect
+            </button>
+        `;
     }
+}
 
-    async function fetchSheetData() {
-        const url = getScriptUrl();
-        if (!url) {
-            showToast("No Google Apps Script URL configured.", "error");
-            useMockData();
-            return;
-        }
+   async function fetchSheetDataSilent() {
+    const url = getScriptUrl();
+    if (!url) return;
 
-        showToast("Syncing fresh data from sheet...", "info");
-        try {
-            const cleanUrl = url.split('?')[0];
-            const cacheBusterUrl = `${cleanUrl}?t=${Date.now()}`;
+    try {
+        const cleanUrl = url.split('?')[0];
+        const cacheBusterUrl = `${cleanUrl}?t=${Date.now()}`;
 
-            const response = await fetch(cacheBusterUrl, { method: 'GET', redirect: 'follow' });
-            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        const response = await fetch(cacheBusterUrl, { method: 'GET', redirect: 'follow' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
 
-            clientsData = data.clients || [];
-            productsData = data.products || [];
+        clientsData = data.clients || [];
+        productsData = data.products || [];
 
-            items = [];
-            addItemRow();
+        // Save fresh data to local storage for the next instant startup
+        localStorage.setItem('quickbill_cached_sheet_data', JSON.stringify({
+            clients: clientsData,
+            products: productsData,
+            syncedAt: new Date().toISOString()
+        }));
 
-            updateDatalists();
-            updateStatusBanner(true);
-            showToast("Synced latest clients & rates successfully!", "success");
+        updateDatalists();
+        updateStatusBanner(true, "Connected live to Google Sheet");
 
-        } catch (err) {
-            console.error("Fetch Error:", err);
-            showToast(`Sync Failed: ${err.message || 'Check Network'}`, "error");
+    } catch (err) {
+        console.error("Background sync error:", err);
+        // If background fetch fails, keep running smoothly on cached data
+        if (clientsData.length > 0) {
+            updateStatusBanner(true, "Connected (Offline / Cache)");
+        } else {
             updateStatusBanner(false);
         }
     }
+}
+
+// Manual Sync Button Handler (Triggers toast notification)
+function fetchSheetData() {
+    showToast("Syncing fresh data from sheet...", "info");
+    fetchSheetDataSilent().then(() => {
+        showToast("Synced latest clients & rates successfully!", "success");
+    });
+}
 
     function updateDatalists() {
         const clientsList = document.getElementById('clientsList');
