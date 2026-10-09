@@ -276,10 +276,9 @@ input[type=number] {
 
 function loadAppInstantly() {
     const url = getScriptUrl();
-
-    // Step 1: Check if we have cached data from previous sessions
     const cachedData = localStorage.getItem('quickbill_cached_sheet_data');
 
+    // 1. If cached data exists on this browser, load it instantly (0 sec delay)
     if (cachedData) {
         try {
             const parsed = JSON.parse(cachedData);
@@ -293,17 +292,18 @@ function loadAppInstantly() {
         } catch (e) {
             console.warn("Invalid cache payload:", e);
         }
-    } else if (!url) {
-        // Fallback to mock mode only if no URL is saved at all
-        useMockData();
+    } else {
+        // 2. On a fresh device/incognito window, show a temporary connecting state
+        updateStatusBanner(true, "Connecting to database...");
     }
 
-    // Step 2: Fetch fresh data silently in the background if URL exists
+    // 3. Perform live background fetch using default/saved URL
     if (url) {
         fetchSheetDataSilent();
+    } else {
+        useMockData();
     }
 }
-
     // --- Delivery Date Management ---
     function initDeliveryDate() {
         handleDeliveryDateChange();
@@ -365,9 +365,12 @@ function loadAppInstantly() {
     }
 
     // --- URL & API Settings ---
-    function getScriptUrl() {
-        return localStorage.getItem('quickbill_script_url') || '';
-    }
+    // Replace the URL string below with your actual Google Apps Script Web App Deployment URL
+const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID_HERE/exec";
+
+function getScriptUrl() {
+    return localStorage.getItem('quickbill_script_url') || DEFAULT_SCRIPT_URL;
+}
 
     function loadSavedScriptUrl() {
         const url = getScriptUrl();
