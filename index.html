@@ -311,6 +311,14 @@ function loadAppInstantly() {
         useMockData();
     }
 }
+        function resetSaveButton() {
+    const saveBtn = document.getElementById('saveSheetBtn');
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.className = "w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer";
+        saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Save Entry to Google Sheet`;
+    }
+}
     // --- Delivery Date Management ---
     function initDeliveryDate() {
         handleDeliveryDateChange();
@@ -718,7 +726,7 @@ function updateItem(id, field, value) {
     }
 
     // --- Save & WhatsApp Actions ---
-   function sendWhatsAppInvoice() {
+  function sendWhatsAppInvoice() {
     // 1. Get Client Info & Status
     const clientSelect = document.getElementById('clientSelect');
     const clientInput = document.getElementById('clientNameInput');
@@ -753,81 +761,70 @@ function updateItem(id, field, value) {
         }
     }
 
-    // 4. Payment Status Emoji Indicator
-    const isPaid = calc.status.toUpperCase() === 'PAID';
-    const paymentStatusIcon = isPaid ? '✅' : '❌';
-    const statusText = calc.status.toUpperCase();
+    // 4. Payment Status Icon Logic
+    const statusUpper = calc.status.toUpperCase();
+    let paymentStatusIcon = '❌';
+    if (statusUpper === 'PAID') {
+        paymentStatusIcon = '✅';
+    } else if (statusUpper.includes('PARTIAL')) {
+        paymentStatusIcon = '⚠️';
+    }
+
+    // 5. Complete Standard Payment Summary for All Templates
+    let paymentSummary = ``;
+    paymentSummary += `✅ Total Bill: ₹${calc.subtotal.toFixed(0)}\n`;
+    paymentSummary += `📌 Previous Dues: ₹${calc.previousDue.toFixed(0)} /-\n`;
+    paymentSummary += `💰 Total Payable: ₹${calc.totalPayable.toFixed(0)}\n`;
+    paymentSummary += `💳 Amount Paid: ₹${calc.amountPaid.toFixed(0)}\n`;
+    paymentSummary += `⚠️ Balance Due: ₹${calc.balanceDue.toFixed(2)}\n\n`;
+    paymentSummary += `♦️ Payment Status: ${statusUpper}${paymentStatusIcon}\n`;
+    paymentSummary += `----------------------------------\n`;
 
     let msg = ``;
 
-    // 5. Dynamic Message Templates matching exact images
+    // 6. Dynamic Templates with Complete Payment Breakdown
     switch (orderStatus) {
         case 'Received':
-            // Order Received Template (Image 4)
             msg += `*ORDER CONFIRMATION - MX FOODS*\n`;
             msg += `Dear Customer,\n\n`;
             msg += `We have *Received* your Order!\n\n`;
             msg += `Here’s your Bill Summary 🧾\n\n`;
             msg += itemsList + `\n`;
-            msg += `✅ Total Bill:  ${calc.subtotal.toFixed(0)} /-\n`;
-            msg += `💰 Total Payable: ₹${calc.totalPayable.toFixed(0)} /-\n\n`;
-            msg += ` Payment Status: ${statusText} ${paymentStatusIcon}\n`;
-            msg += `----------------------------------\n`;
-            msg += `_Thank you for choosing MX Foods!_ `;
+            msg += paymentSummary;
+            msg += `_Thank you for choosing MX Foods!_ ♦️`;
             break;
 
         case 'Ready for Dispatch':
-            // Ready for Dispatch Template (Image 3)
             msg += `Dear Customer,\n\n`;
             msg += `*Your Order with MX Foods is Ready for Dispatch* 📦✅\n\n`;
             msg += `Here’s your Bill Summary 🧾\n\n`;
             msg += itemsList + `\n`;
-            msg += `✅ Total Bill:  ${calc.subtotal.toFixed(0)} /-\n`;
-            if (calc.previousDue > 0) {
-                msg += `⚠️ Balance Due: ${calc.previousDue.toFixed(0)} /-\n`;
-            }
-            msg += `💰 Total Payable: ₹${calc.totalPayable.toFixed(0)} /-\n\n`;
-            msg += ` Payment Status: ${statusText} ${paymentStatusIcon}\n`;
-            msg += `----------------------------------\n`;
-            msg += `_Thank you for choosing MX Foods!_ `;
+            msg += paymentSummary;
+            msg += `_Thank you for choosing MX Foods!_ ♦️`;
             break;
 
         case 'Dispatched':
-            // Dispatched Template (Image 2)
             msg += `Dear Customer,\n\n`;
             msg += `*Your Order is Dispatched Successfully* 🚚✅\n\n`;
             msg += `Here’s your Bill Summary 🧾\n\n`;
             msg += itemsList + `\n`;
-            msg += `✅ Total Bill:  ${calc.subtotal.toFixed(0)} /-\n`;
-            if (calc.previousDue > 0) {
-                msg += `⚠️ Balance Due: ${calc.previousDue.toFixed(0)} /-\n`;
-            }
-            msg += `💰 Total Payable: ₹${calc.totalPayable.toFixed(0)} /-\n\n`;
-            msg += ` Payment Status: ${statusText} ${paymentStatusIcon}\n`;
-            msg += `----------------------------------\n`;
-            msg += `_Thank you for choosing MX Foods!_ `;
+            msg += paymentSummary;
+            msg += `_Thank you for choosing MX Foods!_ ♦️`;
             break;
 
         case 'Delivered':
         default:
-            // Delivered Template (Image 1)
             msg += `Dear Customer,\n\n`;
             msg += `*Your Momo Order is Delivered Successfully* ✅✅\n\n`;
             msg += `📦 Delivered Date: ${formattedDate}\n\n`;
             msg += `Here’s your Bill Summary 🧾\n\n`;
             msg += itemsList + `\n`;
-            msg += `✅ Total Bill:  ${calc.subtotal.toFixed(0)} /-\n`;
-            if (calc.previousDue > 0) {
-                msg += `⚠️ Balance Due: ${calc.previousDue.toFixed(0)} /-\n`;
-            }
-            msg += `💰 Total Payable: ₹${calc.totalPayable.toFixed(0)} /-\n\n`;
-            msg += ` Payment Status: ${statusText} ${paymentStatusIcon}\n`;
-            msg += `----------------------------------\n`;
-            msg += `Thank you for choosing MX Foods! `;
+            msg += paymentSummary;
+            msg += `Thank you for choosing MX Foods! ♦️`;
             break;
     }
 
-    // 6. Clean Phone Number & Send
+    // 7. Clean Phone & Send via wa.me URL
     const cleanPhone = phone.replace(/\D/g, '');
     const fullPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
     const encodedUrl = `https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`;
@@ -836,55 +833,79 @@ function updateItem(id, field, value) {
     showToast(`Opening WhatsApp (${orderStatus})...`, "success");
 }
 
-    async function saveEntryToSheet() {
-        const name = document.getElementById('clientNameInput')?.value.trim();
-        const phone = document.getElementById('clientPhone')?.value.trim();
+   async function saveEntryToSheet() {
+    const saveBtn = document.getElementById('saveSheetBtn');
+    const scriptUrl = getScriptUrl();
 
-        if (!name || !phone) {
-            showToast("Please fill in Client Name & Phone!", "error");
-            return;
-        }
+    if (!scriptUrl) {
+        showToast("Please connect your Google Sheet URL in Settings first!", "error");
+        return;
+    }
 
-        const url = getScriptUrl();
-        const calc = calculateBill();
-        const payload = {
-            deliveryDate: selectedDeliveryDate,
-            clientName: name,
-            clientPhone: phone,
-            items: items,
-            ...calc
-        };
+    const clientSelect = document.getElementById('clientSelect');
+    const clientInput = document.getElementById('clientNameInput');
+    const name = (clientInput && !clientInput.classList.contains('hidden')) 
+        ? clientInput.value.trim() 
+        : (clientSelect ? clientSelect.value.trim() : '');
 
-        if (!url) {
-            showToast("Connect Google Sheet API URL to post live.", "info");
-            return;
-        }
+    if (!name || name === '-- Choose Client --') {
+        showToast("Please select or enter a client name!", "error");
+        return;
+    }
 
-        const saveBtn = document.getElementById('saveBtn');
+    const calc = calculateBill();
+
+    // Set Loading State on Button
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.className = "w-full py-3 px-4 bg-slate-400 text-white font-semibold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-not-allowed opacity-80";
+        saveBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Saving Entry...`;
+    }
+
+    const payload = {
+        date: selectedDeliveryDate,
+        clientName: name,
+        phone: document.getElementById('clientPhone')?.value.trim() || '',
+        orderStatus: document.getElementById('orderStatusSelect')?.value || 'Delivered',
+        items: items.filter(i => i.name),
+        subtotal: calc.subtotal,
+        previousDue: calc.previousDue,
+        totalPayable: calc.totalPayable,
+        amountPaid: calc.amountPaid,
+        balanceDue: calc.balanceDue,
+        paymentStatus: calc.status
+    };
+
+    try {
+        const response = await fetch(scriptUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        // SUCCESS: Disable button & show "Entry Saved"
         if (saveBtn) {
             saveBtn.disabled = true;
-            saveBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Saving...`;
+            saveBtn.className = "w-full py-3 px-4 bg-slate-300 text-slate-600 font-semibold rounded-xl shadow-none transition flex items-center justify-center gap-2 cursor-not-allowed opacity-60";
+            saveBtn.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600"></i> Entry Saved`;
         }
 
-        try {
-            await fetch(url, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+        showToast("Entry saved successfully to Google Sheet!", "success");
 
-            showToast("Bill entry posted to Google Sheet!", "success");
-        } catch (err) {
-            console.error(err);
-            showToast("Error saving to Google Sheet", "error");
-        } finally {
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Save Entry to Google Sheet`;
-            }
+    } catch (err) {
+        console.error("Save error:", err);
+
+        // FAILURE: Re-enable button & show "Tap to Retry"
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.className = "w-full py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer";
+            saveBtn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> Failed - Tap to Retry`;
         }
+
+        showToast("Glich encountered! Entry not saved. Please tap retry.", "error");
     }
+}
 
     function showToast(message, type = "info") {
         const toast = document.getElementById('toast');
