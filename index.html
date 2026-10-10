@@ -719,48 +719,121 @@ function updateItem(id, field, value) {
 
     // --- Save & WhatsApp Actions ---
    function sendWhatsAppInvoice() {
-    const name = document.getElementById('clientNameInput')?.value.trim();
+    // 1. Get Client Info & Status
+    const clientSelect = document.getElementById('clientSelect');
+    const clientInput = document.getElementById('clientNameInput');
+    const name = (clientInput && !clientInput.classList.contains('hidden')) 
+        ? clientInput.value.trim() 
+        : (clientSelect ? clientSelect.value.trim() : '');
+        
     const phone = document.getElementById('clientPhone')?.value.trim();
     const orderStatus = document.getElementById('orderStatusSelect')?.value || 'Delivered';
 
-    if (!name || !phone) {
-        showToast("Please enter Client Name and Phone Number!", "error");
+    if (!name || !phone || name === '-- Choose Client --') {
+        showToast("Please select/enter Client Name and Phone Number!", "error");
         return;
     }
 
     const calc = calculateBill();
-    let msg = `🧾 *INVOICE / BILL STATEMENT*\n`;
-    msg += `📅 *Delivery Date:* ${selectedDeliveryDate}\n`;
-    msg += `📦 *Order Status:* *${orderStatus}*\n`;
-    msg += `👤 *Client Name:* ${name}\n`;
-    msg += `----------------------------------\n`;
-    msg += `📦 *ITEM DETAILS:*\n`;
 
-    items.forEach((item, index) => {
+    // 2. Format Items List (e.g., "250 Mix Veg : ₹875")
+    let itemsList = ``;
+    items.forEach((item) => {
         if (item.name) {
-            msg += `${index + 1}. *${item.name}*\n`;
-            msg += `   Qty: ${item.qty} x ₹${item.rate} = ₹${(item.qty * item.rate).toFixed(2)}\n`;
+            itemsList += `${item.qty} ${item.name} : ₹${(item.qty * item.rate).toFixed(0)}\n`;
         }
     });
 
-    msg += `----------------------------------\n`;
-    msg += `💵 *Subtotal:* ₹${calc.subtotal.toFixed(2)}\n`;
-    if (calc.previousDue > 0) {
-        msg += `📌 *Previous Due:* ₹${calc.previousDue.toFixed(2)}\n`;
+    // 3. Format Date as DD-MM-YY (e.g., 07-10-26)
+    let formattedDate = selectedDeliveryDate;
+    if (selectedDeliveryDate) {
+        const parts = selectedDeliveryDate.split('-');
+        if (parts.length === 3) {
+            formattedDate = `${parts[2]}-${parts[1]}-${parts[0].slice(-2)}`;
+        }
     }
-    msg += `💰 *Total Payable:* ₹${calc.totalPayable.toFixed(2)}\n`;
-    msg += `💳 *Amount Paid:* ₹${calc.amountPaid.toFixed(2)}\n`;
-    msg += `🔴 *Balance Due:* ₹${calc.balanceDue.toFixed(2)}\n`;
-    msg += `📊 *Payment Status:* ${calc.status.toUpperCase()}\n`;
-    msg += `----------------------------------\n`;
-    msg += `Thank you for your business! 🙏`;
 
+    // 4. Payment Status Emoji Indicator
+    const isPaid = calc.status.toUpperCase() === 'PAID';
+    const paymentStatusIcon = isPaid ? '✅' : '❌';
+    const statusText = calc.status.toUpperCase();
+
+    let msg = ``;
+
+    // 5. Dynamic Message Templates matching exact images
+    switch (orderStatus) {
+        case 'Received':
+            // Order Received Template (Image 4)
+            msg += `*ORDER CONFIRMATION - MX FOODS*\n`;
+            msg += `Dear Customer,\n\n`;
+            msg += `We have *Received* your Order!\n\n`;
+            msg += `Here’s your Bill Summary 🧾\n\n`;
+            msg += itemsList + `\n`;
+            msg += `✅ Total Bill:  ${calc.subtotal.toFixed(0)} /-\n`;
+            msg += `💰 Total Payable: ₹${calc.totalPayable.toFixed(0)} /-\n\n`;
+            msg += ` Payment Status: ${statusText} ${paymentStatusIcon}\n`;
+            msg += `----------------------------------\n`;
+            msg += `_Thank you for choosing MX Foods!_ `;
+            break;
+
+        case 'Ready for Dispatch':
+            // Ready for Dispatch Template (Image 3)
+            msg += `Dear Customer,\n\n`;
+            msg += `*Your Order with MX Foods is Ready for Dispatch* 📦✅\n\n`;
+            msg += `Here’s your Bill Summary 🧾\n\n`;
+            msg += itemsList + `\n`;
+            msg += `✅ Total Bill:  ${calc.subtotal.toFixed(0)} /-\n`;
+            if (calc.previousDue > 0) {
+                msg += `⚠️ Balance Due: ${calc.previousDue.toFixed(0)} /-\n`;
+            }
+            msg += `💰 Total Payable: ₹${calc.totalPayable.toFixed(0)} /-\n\n`;
+            msg += ` Payment Status: ${statusText} ${paymentStatusIcon}\n`;
+            msg += `----------------------------------\n`;
+            msg += `_Thank you for choosing MX Foods!_ `;
+            break;
+
+        case 'Dispatched':
+            // Dispatched Template (Image 2)
+            msg += `Dear Customer,\n\n`;
+            msg += `*Your Order is Dispatched Successfully* 🚚✅\n\n`;
+            msg += `Here’s your Bill Summary 🧾\n\n`;
+            msg += itemsList + `\n`;
+            msg += `✅ Total Bill:  ${calc.subtotal.toFixed(0)} /-\n`;
+            if (calc.previousDue > 0) {
+                msg += `⚠️ Balance Due: ${calc.previousDue.toFixed(0)} /-\n`;
+            }
+            msg += `💰 Total Payable: ₹${calc.totalPayable.toFixed(0)} /-\n\n`;
+            msg += ` Payment Status: ${statusText} ${paymentStatusIcon}\n`;
+            msg += `----------------------------------\n`;
+            msg += `_Thank you for choosing MX Foods!_ `;
+            break;
+
+        case 'Delivered':
+        default:
+            // Delivered Template (Image 1)
+            msg += `Dear Customer,\n\n`;
+            msg += `*Your Momo Order is Delivered Successfully* ✅✅\n\n`;
+            msg += `📦 Delivered Date: ${formattedDate}\n\n`;
+            msg += `Here’s your Bill Summary 🧾\n\n`;
+            msg += itemsList + `\n`;
+            msg += `✅ Total Bill:  ${calc.subtotal.toFixed(0)} /-\n`;
+            if (calc.previousDue > 0) {
+                msg += `⚠️ Balance Due: ${calc.previousDue.toFixed(0)} /-\n`;
+            }
+            msg += `💰 Total Payable: ₹${calc.totalPayable.toFixed(0)} /-\n\n`;
+            msg += ` Payment Status: ${statusText} ${paymentStatusIcon}\n`;
+            msg += `----------------------------------\n`;
+            msg += `Thank you for choosing MX Foods! `;
+            break;
+    }
+
+    // 6. Clean Phone Number & Send
     const cleanPhone = phone.replace(/\D/g, '');
     const fullPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
     const encodedUrl = `https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`;
 
     window.open(encodedUrl, '_blank');
-    showToast("Opening WhatsApp...", "success");
+    showToast(`Opening WhatsApp (${orderStatus})...`, "success");
 }
 
     async function saveEntryToSheet() {
