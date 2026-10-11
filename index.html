@@ -770,17 +770,28 @@ function updateItem(id, field, value) {
         paymentStatusIcon = '⚠️';
     }
 
-    // 5. Complete Standard Payment Summary for All Templates
+ // 5. Complete Standard Payment Summary (Conditionally Hidden if 0)
     let paymentSummary = ``;
     paymentSummary += `✅ Total Bill: ₹${calc.subtotal.toFixed(0)}\n`;
-    paymentSummary += `📌 Previous Dues: ₹${calc.previousDue.toFixed(0)} /-\n`;
-    paymentSummary += `💰 Total Payable: ₹${calc.totalPayable.toFixed(0)}\n`;
-    paymentSummary += `💳 Amount Paid: ₹${calc.amountPaid.toFixed(0)}\n`;
-    paymentSummary += `⚠️ Balance Due: ₹${calc.balanceDue.toFixed(2)}\n\n`;
-    paymentSummary += `♦️ Payment Status: ${statusUpper}${paymentStatusIcon}\n`;
+    
+    // Only show Previous Dues if greater than 0
+    if (calc.previousDue > 0) {
+        paymentSummary += `📌 Previous Dues: ₹${calc.previousDue.toFixed(0)} /-\n`;
+        paymentSummary += `💰 Total Payable: ₹${calc.totalPayable.toFixed(0)}\n`;
+    }
+    
+    // Only show Amount Paid if greater than 0
+    if (calc.amountPaid > 0) {
+        paymentSummary += `💳 Amount Paid: ₹${calc.amountPaid.toFixed(0)}\n`;
+    }
+    
+    // Only show Balance Due if greater than 0
+    if (calc.balanceDue > 0) {
+        paymentSummary += `⚠️ Balance Due: ₹${calc.balanceDue.toFixed(2)}\n`;
+    }
+    
+    paymentSummary += `\n♦️ Payment Status: ${statusUpper} ${paymentStatusIcon}\n`;
     paymentSummary += `----------------------------------\n`;
-
-    let msg = ``;
 
     // 6. Dynamic Templates with Complete Payment Breakdown
     switch (orderStatus) {
@@ -791,7 +802,7 @@ function updateItem(id, field, value) {
             msg += `Here’s your Bill Summary 🧾\n\n`;
             msg += itemsList + `\n`;
             msg += paymentSummary;
-            msg += `_Thank you for choosing MX Foods!_ ♦️`;
+            msg += `_Thank you for choosing MX Foods!_ `;
             break;
 
         case 'Ready for Dispatch':
@@ -800,7 +811,7 @@ function updateItem(id, field, value) {
             msg += `Here’s your Bill Summary 🧾\n\n`;
             msg += itemsList + `\n`;
             msg += paymentSummary;
-            msg += `_Thank you for choosing MX Foods!_ ♦️`;
+            msg += `_Thank you for choosing MX Foods!_ `;
             break;
 
         case 'Dispatched':
@@ -809,7 +820,7 @@ function updateItem(id, field, value) {
             msg += `Here’s your Bill Summary 🧾\n\n`;
             msg += itemsList + `\n`;
             msg += paymentSummary;
-            msg += `_Thank you for choosing MX Foods!_ ♦️`;
+            msg += `_Thank you for choosing MX Foods!_ `;
             break;
 
         case 'Delivered':
@@ -820,7 +831,7 @@ function updateItem(id, field, value) {
             msg += `Here’s your Bill Summary 🧾\n\n`;
             msg += itemsList + `\n`;
             msg += paymentSummary;
-            msg += `Thank you for choosing MX Foods! ♦️`;
+            msg += `Thank you for choosing MX Foods! `;
             break;
     }
 
