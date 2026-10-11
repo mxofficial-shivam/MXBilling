@@ -726,122 +726,134 @@ function updateItem(id, field, value) {
     }
 
     // --- Save & WhatsApp Actions ---
-  function sendWhatsAppInvoice() {
-    // 1. Get Client Info & Status
-    const clientSelect = document.getElementById('clientSelect');
-    const clientInput = document.getElementById('clientNameInput');
-    const name = (clientInput && !clientInput.classList.contains('hidden')) 
-        ? clientInput.value.trim() 
-        : (clientSelect ? clientSelect.value.trim() : '');
+function sendWhatsAppInvoice() {
+    try {
+        // 1. Get Client Info & Status
+        const clientSelect = document.getElementById('clientSelect');
+        const clientInput = document.getElementById('clientNameInput');
+        const name = (clientInput && !clientInput.classList.contains('hidden')) 
+            ? clientInput.value.trim() 
+            : (clientSelect ? clientSelect.value.trim() : '');
+            
+        const phone = document.getElementById('clientPhone')?.value.trim();
+        const orderStatus = document.getElementById('orderStatusSelect')?.value || 'Delivered';
+
+        if (!name || !phone || name === '-- Choose Client --') {
+            showToast("Please select/enter Client Name and Phone Number!", "error");
+            return;
+        }
+
+        const calc = calculateBill() || { subtotal: 0, previousDue: 0, totalPayable: 0, amountPaid: 0, balanceDue: 0, status: 'PENDING' };
+
+        // 2. Format Items List
+        let itemsList = ``;
+        if (Array.isArray(items)) {
+            items.forEach((item) => {
+                if (item.name && item.qty > 0) {
+                    itemsList += `${item.qty} ${item.name} : ₹${(item.qty * item.rate).toFixed(0)}\n`;
+                }
+            });
+        }
+
+        // 3. Format Date as DD-MM-YY
+        let formattedDate = selectedDeliveryDate || '';
+        if (selectedDeliveryDate) {
+            const parts = selectedDeliveryDate.split('-');
+            if (parts.length === 3) {
+                formattedDate = `${parts[2]}-${parts[1]}-${parts[0].slice(-2)}`;
+            }
+        }
+
+        // 4. Payment Status Icon Logic
+        const statusUpper = (calc.status || 'PENDING').toUpperCase();
+        let paymentStatusIcon = '❌';
+        if (statusUpper === 'PAID') {
+            paymentStatusIcon = '✅';
+        } else if (statusUpper.includes('PARTIAL') || statusUpper.includes('PARTIALLY')) {
+            paymentStatusIcon = '⚠️';
+        }
+
+        // 5. Conditional Payment Summary (Hides items if amount is 0)
+        let paymentSummary = ``;
+        paymentSummary += `✅ Total Bill: ₹${Number(calc.subtotal || 0).toFixed(0)}\n`;
         
-    const phone = document.getElementById('clientPhone')?.value.trim();
-    const orderStatus = document.getElementById('orderStatusSelect')?.value || 'Delivered';
-
-    if (!name || !phone || name === '-- Choose Client --') {
-        showToast("Please select/enter Client Name and Phone Number!", "error");
-        return;
-    }
-
-    const calc = calculateBill();
-
-    // 2. Format Items List (e.g., "250 Mix Veg : ₹875")
-    let itemsList = ``;
-    items.forEach((item) => {
-        if (item.name) {
-            itemsList += `${item.qty} ${item.name} : ₹${(item.qty * item.rate).toFixed(0)}\n`;
+        // Show Previous Dues only if > 0
+        if (Number(calc.previousDue || 0) > 0) {
+            paymentSummary += `📌 Previous Dues: ₹${Number(calc.previousDue).toFixed(0)} /-\n`;
         }
-    });
-
-    // 3. Format Date as DD-MM-YY (e.g., 07-10-26)
-    let formattedDate = selectedDeliveryDate;
-    if (selectedDeliveryDate) {
-        const parts = selectedDeliveryDate.split('-');
-        if (parts.length === 3) {
-            formattedDate = `${parts[2]}-${parts[1]}-${parts[0].slice(-2)}`;
+        
+        // Total Payable should always be visible
+        paymentSummary += `💰 Total Payable: ₹${Number(calc.totalPayable || 0).toFixed(0)}\n`;
+        
+        // Show Amount Paid only if > 0
+        if (Number(calc.amountPaid || 0) > 0) {
+            paymentSummary += `💳 Amount Paid: ₹${Number(calc.amountPaid).toFixed(0)}\n`;
         }
+        
+        // Show Balance Due only if > 0
+        if (Number(calc.balanceDue || 0) > 0) {
+            paymentSummary += `⚠️ Balance Due: ₹${Number(calc.balanceDue).toFixed(2)}\n`;
+        }
+        
+        paymentSummary += `\n♦️ Payment Status: ${statusUpper}${paymentStatusIcon}\n`;
+        paymentSummary += `----------------------------------\n`;
+
+        let msg = ``;
+
+        // 6. Dynamic Templates
+        switch (orderStatus) {
+            case 'Received':
+                msg += `*ORDER CONFIRMATION - MX FOODS*\n`;
+                msg += `Dear Customer,\n\n`;
+                msg += `We have *Received* your Order!\n\n`;
+                msg += `Here’s your Bill Summary 🧾\n\n`;
+                msg += itemsList + `\n`;
+                msg += paymentSummary;
+                msg += `_Thank you for choosing MX Foods!_ ♦️`;
+                break;
+
+            case 'Ready for Dispatch':
+                msg += `Dear Customer,\n\n`;
+                msg += `*Your Order with MX Foods is Ready for Dispatch* 📦✅\n\n`;
+                msg += `Here’s your Bill Summary 🧾\n\n`;
+                msg += itemsList + `\n`;
+                msg += paymentSummary;
+                msg += `_Thank you for choosing MX Foods!_ ♦️`;
+                break;
+
+            case 'Dispatched':
+                msg += `Dear Customer,\n\n`;
+                msg += `*Your Order is Dispatched Successfully* 🚚✅\n\n`;
+                msg += `Here’s your Bill Summary 🧾\n\n`;
+                msg += itemsList + `\n`;
+                msg += paymentSummary;
+                msg += `_Thank you for choosing MX Foods!_ ♦️`;
+                break;
+
+            case 'Delivered':
+            default:
+                msg += `Dear Customer,\n\n`;
+                msg += `*Your Momo Order is Delivered Successfully* ✅✅\n\n`;
+                msg += `📦 Delivered Date: ${formattedDate}\n\n`;
+                msg += `Here’s your Bill Summary 🧾\n\n`;
+                msg += itemsList + `\n`;
+                msg += paymentSummary;
+                msg += `Thank you for choosing MX Foods! ♦️`;
+                break;
+        }
+
+        // 7. Clean Phone & Send via wa.me URL
+        const cleanPhone = phone.replace(/\D/g, '');
+        const fullPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
+        const encodedUrl = `https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`;
+
+        window.open(encodedUrl, '_blank');
+        showToast(`Opening WhatsApp (${orderStatus})...`, "success");
+
+    } catch (err) {
+        console.error("WhatsApp Invoice Error:", err);
+        showToast("Error generating WhatsApp message. Check console.", "error");
     }
-
-    // 4. Payment Status Icon Logic
-    const statusUpper = calc.status.toUpperCase();
-    let paymentStatusIcon = '❌';
-    if (statusUpper === 'PAID') {
-        paymentStatusIcon = '✅';
-    } else if (statusUpper.includes('PARTIAL')) {
-        paymentStatusIcon = '⚠️';
-    }
-
- // 5. Complete Standard Payment Summary (Conditionally Hidden if 0)
-    let paymentSummary = ``;
-    paymentSummary += `✅ Total Bill: ₹${calc.subtotal.toFixed(0)}\n`;
-    
-    // Only show Previous Dues if greater than 0
-    if (calc.previousDue > 0) {
-        paymentSummary += `📌 Previous Dues: ₹${calc.previousDue.toFixed(0)} /-\n`;
-        paymentSummary += `💰 Total Payable: ₹${calc.totalPayable.toFixed(0)}\n`;
-    }
-    
-    // Only show Amount Paid if greater than 0
-    if (calc.amountPaid > 0) {
-        paymentSummary += `💳 Amount Paid: ₹${calc.amountPaid.toFixed(0)}\n`;
-    }
-    
-    // Only show Balance Due if greater than 0
-    if (calc.balanceDue > 0) {
-        paymentSummary += `⚠️ Balance Due: ₹${calc.balanceDue.toFixed(2)}\n`;
-    }
-    
-    paymentSummary += `\n♦️ Payment Status: ${statusUpper} ${paymentStatusIcon}\n`;
-    paymentSummary += `----------------------------------\n`;
-
-    // 6. Dynamic Templates with Complete Payment Breakdown
-    switch (orderStatus) {
-        case 'Received':
-            msg += `*ORDER CONFIRMATION - MX FOODS*\n`;
-            msg += `Dear Customer,\n\n`;
-            msg += `We have *Received* your Order!\n\n`;
-            msg += `Here’s your Bill Summary 🧾\n\n`;
-            msg += itemsList + `\n`;
-            msg += paymentSummary;
-            msg += `_Thank you for choosing MX Foods!_ `;
-            break;
-
-        case 'Ready for Dispatch':
-            msg += `Dear Customer,\n\n`;
-            msg += `*Your Order with MX Foods is Ready for Dispatch* 📦✅\n\n`;
-            msg += `Here’s your Bill Summary 🧾\n\n`;
-            msg += itemsList + `\n`;
-            msg += paymentSummary;
-            msg += `_Thank you for choosing MX Foods!_ `;
-            break;
-
-        case 'Dispatched':
-            msg += `Dear Customer,\n\n`;
-            msg += `*Your Order is Dispatched Successfully* 🚚✅\n\n`;
-            msg += `Here’s your Bill Summary 🧾\n\n`;
-            msg += itemsList + `\n`;
-            msg += paymentSummary;
-            msg += `_Thank you for choosing MX Foods!_ `;
-            break;
-
-        case 'Delivered':
-        default:
-            msg += `Dear Customer,\n\n`;
-            msg += `*Your Momo Order is Delivered Successfully* ✅✅\n\n`;
-            msg += `📦 Delivered Date: ${formattedDate}\n\n`;
-            msg += `Here’s your Bill Summary 🧾\n\n`;
-            msg += itemsList + `\n`;
-            msg += paymentSummary;
-            msg += `Thank you for choosing MX Foods! `;
-            break;
-    }
-
-    // 7. Clean Phone & Send via wa.me URL
-    const cleanPhone = phone.replace(/\D/g, '');
-    const fullPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
-    const encodedUrl = `https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`;
-
-    window.open(encodedUrl, '_blank');
-    showToast(`Opening WhatsApp (${orderStatus})...`, "success");
 }
 
    async function saveEntryToSheet() {
