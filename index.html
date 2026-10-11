@@ -809,7 +809,7 @@ function sendWhatsAppInvoice() {
                 msg += `Here’s your Bill Summary 🧾\n\n`;
                 msg += itemsList + `\n`;
                 msg += paymentSummary;
-                msg += `_Thank you for choosing MX Foods!_ ♦️`;
+                msg += `_Thank you for choosing MX Foods!_ `;
                 break;
 
             case 'Ready for Dispatch':
@@ -818,7 +818,7 @@ function sendWhatsAppInvoice() {
                 msg += `Here’s your Bill Summary 🧾\n\n`;
                 msg += itemsList + `\n`;
                 msg += paymentSummary;
-                msg += `_Thank you for choosing MX Foods!_ ♦️`;
+                msg += `_Thank you for choosing MX Foods!_ `;
                 break;
 
             case 'Dispatched':
@@ -827,18 +827,18 @@ function sendWhatsAppInvoice() {
                 msg += `Here’s your Bill Summary 🧾\n\n`;
                 msg += itemsList + `\n`;
                 msg += paymentSummary;
-                msg += `_Thank you for choosing MX Foods!_ ♦️`;
+                msg += `_Thank you for choosing MX Foods!_ `;
                 break;
 
             case 'Delivered':
             default:
                 msg += `Dear Customer,\n\n`;
-                msg += `*Your Momo Order is Delivered Successfully* ✅✅\n\n`;
+                msg += `*Your Order with MX Foods is Delivered Successfully* ✅✅\n\n`;
                 msg += `📦 Delivered Date: ${formattedDate}\n\n`;
                 msg += `Here’s your Bill Summary 🧾\n\n`;
                 msg += itemsList + `\n`;
                 msg += paymentSummary;
-                msg += `Thank you for choosing MX Foods! ♦️`;
+                msg += `Thank you for choosing MX Foods! `;
                 break;
         }
 
