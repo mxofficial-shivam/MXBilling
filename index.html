@@ -885,8 +885,13 @@ function sendWhatsAppInvoice() {
         saveBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Saving Entry...`;
     }
 
+    // Safely get date value
+    const dateInputValue = (typeof selectedDeliveryDate !== 'undefined' && selectedDeliveryDate) 
+        ? selectedDeliveryDate 
+        : new Date().toISOString().split('T')[0];
+
     const payload = {
-        date: dateInputValue,,
+        date: dateInputValue,
         clientName: name,
         phone: document.getElementById('clientPhone')?.value.trim() || '',
         orderStatus: document.getElementById('orderStatusSelect')?.value || 'Delivered',
@@ -900,7 +905,7 @@ function sendWhatsAppInvoice() {
     };
 
     try {
-        const response = await fetch(scriptUrl, {
+        await fetch(scriptUrl, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
