@@ -886,7 +886,7 @@ function sendWhatsAppInvoice() {
     }
 
     const payload = {
-        date: selectedDeliveryDate,
+        date: dateInputValue,,
         clientName: name,
         phone: document.getElementById('clientPhone')?.value.trim() || '',
         orderStatus: document.getElementById('orderStatusSelect')?.value || 'Delivered',
