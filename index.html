@@ -65,7 +65,7 @@
                         <div id="connectionStatus" class="mb-5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between">
                             <span class="flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                                <span>Currently running in <strong>Mock Mode</strong> (Sample Data). Connect your Google Sheet URL in Settings.[cite: 4]</span>
+                                <span>Currently running in <strong>Mock Mode</strong> (Sample Data). Connect your Google Sheet URL in Settings.</span>
                             </span>
                             <button onclick="fetchSheetData()" id="syncBtn" class="px-2.5 py-1 bg-amber-200 hover:bg-amber-300 rounded-md font-semibold text-amber-900 transition flex items-center gap-1">
                                 <i class="fa-solid fa-rotate"></i> Sync Data
@@ -283,7 +283,7 @@
                 </button>
             </div>
             <p class="text-xs text-slate-500 mb-4">
-                Paste your deployed Google Apps Script Web App URL below to fetch master client/product rates and push billing entries automatically.[cite: 4]
+                Paste your deployed Google Apps Script Web App URL below to fetch master client/product rates and push billing entries automatically.
             </p>
             <div class="space-y-4">
                 <div>
@@ -1053,8 +1053,9 @@
     }
 
   function showToast(message, type = "info") {
+    const container = document.getElementById('toastContainer');
     const toast = document.getElementById('toast');
-    if (!toast) return;
+    if (!container || !toast) return;
 
     let icon = '<i class="fa-solid fa-circle-info text-lg"></i>';
     let bgClass = 'bg-slate-900 text-white border border-slate-700';
@@ -1068,9 +1069,10 @@
     }
 
     toast.innerHTML = `${icon} <span>${message}</span>`;
-    // Apply styling classes without breaking the fixed screen centering
-    toast.className = `px-5 py-3.5 rounded-2xl text-sm font-bold shadow-2xl transition-all duration-300 flex items-center gap-3 justify-center ${bgClass}`;
-    toast.style.display = 'flex';
+    toast.className = `px-5 py-3.5 rounded-2xl text-sm font-bold shadow-2xl transition-all duration-300 flex items-center gap-3 justify-center ${bgClass} pointer-events-auto`;
+    
+    // Display the outer full-width flex container which forces absolute centering
+    container.style.display = 'flex';
 
     // Remove bounce after 1 second
     setTimeout(() => {
@@ -1079,11 +1081,13 @@
 
     // Hide after 3.5 seconds
     setTimeout(() => {
-        toast.style.display = 'none';
+        container.style.display = 'none';
     }, 3500);
 }
     </script>
-    <!-- Floating Top Alert Toast (Place right before closing </body> tag) -->
-<div id="toast" style="display: none; position: fixed; top: 16px; left: 0; right: 0; margin-left: auto; margin-right: auto; z-index: 99999; width: max-content; max-width: 90%;" class="px-5 py-3.5 rounded-2xl text-sm font-semibold shadow-2xl transition-all duration-300 items-center gap-2.5 text-center justify-center"></div>
+   <!-- Floating Top Centered Toast Container -->
+<div id="toastContainer" style="display: none; position: fixed; top: 16px; left: 0; width: 100%; z-index: 99999; pointer-events: none; justify-content: center; padding: 0 16px;">
+    <div id="toast" class="px-5 py-3.5 rounded-2xl text-sm font-semibold shadow-2xl transition-all duration-300 flex items-center gap-2.5 text-center pointer-events-auto"></div>
+</div>
 </body>
 </html>
