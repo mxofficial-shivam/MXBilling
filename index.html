@@ -1053,9 +1053,8 @@
     }
 
   function showToast(message, type = "info") {
-    const container = document.getElementById('toastContainer');
     const toast = document.getElementById('toast');
-    if (!container || !toast) return;
+    if (!toast) return;
 
     let icon = '<i class="fa-solid fa-circle-info text-lg"></i>';
     let bgClass = 'bg-slate-900 text-white border border-slate-700';
@@ -1069,10 +1068,8 @@
     }
 
     toast.innerHTML = `${icon} <span>${message}</span>`;
-    toast.className = `px-5 py-3.5 rounded-2xl text-sm font-bold shadow-2xl transition-all duration-300 flex items-center gap-3 justify-center ${bgClass} pointer-events-auto`;
-    
-    // Display the outer full-width flex container which forces absolute centering
-    container.style.display = 'flex';
+    toast.className = `px-5 py-3.5 rounded-2xl text-sm font-bold shadow-2xl transition-all duration-300 flex items-center gap-3 justify-center ${bgClass}`;
+    toast.style.display = 'flex';
 
     // Remove bounce after 1 second
     setTimeout(() => {
@@ -1081,13 +1078,12 @@
 
     // Hide after 3.5 seconds
     setTimeout(() => {
-        container.style.display = 'none';
+        toast.style.display = 'none';
     }, 3500);
 }
     </script>
    <!-- Floating Top Centered Toast Container -->
-<div id="toastContainer" style="display: none; position: fixed; top: 16px; left: 0; width: 100%; z-index: 99999; pointer-events: none; justify-content: center; padding: 0 16px;">
-    <div id="toast" class="px-5 py-3.5 rounded-2xl text-sm font-semibold shadow-2xl transition-all duration-300 flex items-center gap-2.5 text-center pointer-events-auto"></div>
-</div>
+<!-- Top Centered Toast Alert -->
+<div id="toast" style="display: none; position: fixed; top: 20px; left: 0; right: 0; width: fit-content; max-width: 90%; margin: 0 auto; z-index: 99999;" class="px-5 py-3.5 rounded-2xl text-sm font-semibold shadow-2xl transition-all duration-300 items-center gap-2.5 text-center justify-center"></div>
 </body>
 </html>
