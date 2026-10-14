@@ -9,17 +9,14 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        /* Hide number input spinner arrows for Chrome, Safari, Edge, Opera */
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-/* Hide number input spinner arrows for Firefox */
-input[type=number] {
-    -moz-appearance: textfield;
-}
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen p-3 md:p-6">
@@ -47,198 +44,230 @@ input[type=number] {
             </div>
         </header>
 
-        <!-- Main Form & Dynamic Calculation Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            <div class="lg:col-span-2 space-y-6">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 md:p-6">
-                    
-                    <!-- Connection Status Banner -->
-                    <div id="connectionStatus" class="mb-5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between">
-                        <span class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                            <span>Currently running in <strong>Mock Mode</strong> (Sample Data). Connect your Google Sheet URL in Settings.</span>
-                        </span>
-                        <button onclick="fetchSheetData()" id="syncBtn" class="px-2.5 py-1 bg-amber-200 hover:bg-amber-300 rounded-md font-semibold text-amber-900 transition flex items-center gap-1">
-                            <i class="fa-solid fa-rotate"></i> Sync Data
-                        </button>
-                    </div>
-
-                    <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-user-gear text-emerald-500"></i> 1. Select Client
-                    </h2>
-
-                    <!-- Delivery Date Selection -->
-<!-- Section 1: Client, Phone, Date & Order Status -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    
-    <!-- Delivery Date Block -->
-    <div>
-        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">
-            <i class="fa-solid fa-calendar-day text-emerald-500 mr-1"></i> Delivery Date <span class="text-red-500">*</span>
-        </label>
-        <div class="flex items-center gap-2">
-            <select id="deliveryDateOption" onchange="handleDeliveryDateChange()" class="w-1/2 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition font-medium text-slate-800">
-                <option value="today" selected>Today</option>
-                <option value="yesterday">Yesterday</option>
-                <option value="custom">Custom Date</option>
-            </select>
-
-            <input type="date" id="customDatePicker" onchange="updateSelectedDate()" class="hidden w-1/2 px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition">
-
-            <span id="selectedDateDisplay" class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-2.5 rounded-xl border border-emerald-200 whitespace-nowrap flex items-center justify-center">
-                <!-- Date dynamic preview -->
-            </span>
+        <!-- App Navigation Tab Switcher -->
+        <div class="flex bg-slate-200/70 p-1 rounded-2xl max-w-md mx-auto shadow-inner">
+            <button onclick="switchTab('billing')" id="navBillingTab" class="flex-1 py-2.5 text-sm font-bold rounded-xl bg-white text-slate-800 shadow-sm transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-file-invoice text-emerald-600"></i> Billing & Invoices
+            </button>
+            <button onclick="switchTab('payments')" id="navPaymentsTab" class="flex-1 py-2.5 text-sm font-bold rounded-xl text-slate-600 hover:text-slate-800 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-hand-holding-dollar text-emerald-600"></i> Collect Payments
+            </button>
         </div>
-    </div>
 
-    <!-- Order Status Block -->
-    <div>
-        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">
-            <i class="fa-solid fa-truck-ramp-box text-emerald-500 mr-1"></i> Order Status <span class="text-red-500">*</span>
-        </label>
-        <select id="orderStatusSelect" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition font-medium text-slate-800">
-            <option value="Received">Received</option>
-            <option value="Ready for Dispatch">Ready for Dispatch</option>
-            <option value="Dispatched">Dispatched</option>
-            <option value="Delivered" selected>Delivered</option>
-        </select>
-    </div>
+        <!-- ================= PAGE 1: BILLING VIEW ================= -->
+        <div id="billingPage" class="space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-</div>
-                   
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                        <div>
-    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">
-        Select or Enter Client <span class="text-red-500">*</span>
-    </label>
-    <div class="relative">
-        <!-- Direct Select Dropdown for Mobile -->
-        <select id="clientSelect" onchange="handleClientDropdownSelect(this.value)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition font-medium text-slate-800">
-            <option value="" disabled selected>-- Choose Client --</option>
-        </select>
-        
-        <!-- Hidden/Custom Input for Typing New Client -->
-        <input type="text" id="clientNameInput" oninput="onClientSelect()" placeholder="Or type new client name..." class="hidden mt-2 w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none font-medium">
-    </div>
-</div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">WhatsApp Phone <span class="text-red-500">*</span></label>
-                            <div class="flex">
-                                <span class="inline-flex items-center px-3 text-sm text-slate-600 bg-slate-200 border border-r-0 border-slate-300 rounded-l-lg font-medium">+91</span>
-                                <input type="tel" id="clientPhone" placeholder="9876543210" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-r-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Purchased Items Table -->
-                    <div class="mt-6">
-                        <div class="flex items-center justify-between mb-3">
-                            <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                                <i class="fa-solid fa-boxes-packing text-emerald-500"></i> 2. Purchased Items
-                            </h2>
-                            <button onclick="addItemRow()" class="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
-                                <i class="fa-solid fa-plus"></i> Add Item
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 md:p-6">
+                        
+                        <!-- Connection Status Banner -->
+                        <div id="connectionStatus" class="mb-5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between">
+                            <span class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                <span>Currently running in <strong>Mock Mode</strong> (Sample Data). Connect your Google Sheet URL in Settings.[cite: 4]</span>
+                            </span>
+                            <button onclick="fetchSheetData()" id="syncBtn" class="px-2.5 py-1 bg-amber-200 hover:bg-amber-300 rounded-md font-semibold text-amber-900 transition flex items-center gap-1">
+                                <i class="fa-solid fa-rotate"></i> Sync Data
                             </button>
                         </div>
 
-                        <datalist id="productsList">
-                            <!-- Populated dynamically -->
-                        </datalist>
-
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm">
-                                <thead>
-                                    <tr class="text-xs uppercase bg-slate-100 text-slate-600 font-semibold">
-                                        <th class="p-2.5 rounded-l-lg">Product Name</th>
-                                        <th class="p-2.5 w-24">Qty</th>
-                                        <th class="p-2.5 w-28">Rate (₹)</th>
-                                        <th class="p-2.5 w-28">Amount (₹)</th>
-                                        <th class="p-2.5 w-12 text-center rounded-r-lg">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="itemsContainer" class="divide-y divide-slate-100">
-                                    <!-- Dynamic Rows Inserted Here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Payment Adjustment -->
-                    <div class="mt-6 pt-6 border-t border-slate-100">
                         <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-wallet text-emerald-500"></i> 3. Payment Status & Balances
+                            <i class="fa-solid fa-user-gear text-emerald-500"></i> 1. Select Client
                         </h2>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                        <!-- Delivery Date Selection -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Previous Due (₹)</label>
-                                <input type="number" id="previousDue" value="0" min="0" oninput="calculateBill()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition">
+                                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">
+                                    <i class="fa-solid fa-calendar-day text-emerald-500 mr-1"></i> Delivery Date <span class="text-red-500">*</span>
+                                </label>
+                                <div class="flex items-center gap-2">
+                                    <select id="deliveryDateOption" onchange="handleDeliveryDateChange()" class="w-1/2 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition font-medium text-slate-800">
+                                        <option value="today" selected>Today</option>
+                                        <option value="yesterday">Yesterday</option>
+                                        <option value="custom">Custom Date</option>
+                                    </select>
+                                    <input type="date" id="customDatePicker" onchange="updateSelectedDate()" class="hidden w-1/2 px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition">
+                                    <span id="selectedDateDisplay" class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-2.5 rounded-xl border border-emerald-200 whitespace-nowrap flex items-center justify-center"></span>
+                                </div>
                             </div>
+
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Payment Status</label>
-                                <select id="paymentStatus" onchange="handleStatusChange()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition font-medium">
-                                    <option value="Paid">Fully Paid</option>
-                                    <option value="Partial">Partially Paid</option>
-                                    <option value="Pending" selected>Pending / Unpaid</option>
+                                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">
+                                    <i class="fa-solid fa-truck-ramp-box text-emerald-500 mr-1"></i> Order Status <span class="text-red-500">*</span>
+                                </label>
+                                <select id="orderStatusSelect" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition font-medium text-slate-800">
+                                    <option value="Received">Received</option>
+                                    <option value="Ready for Dispatch">Ready for Dispatch</option>
+                                    <option value="Dispatched">Dispatched</option>
+                                    <option value="Delivered" selected>Delivered</option>
                                 </select>
                             </div>
+                        </div>
+                       
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Amount Paid (₹)</label>
-                                <input type="number" id="amountPaid" value="0" min="0" oninput="calculateBill()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition">
+                                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">
+                                    Select or Enter Client <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <select id="clientSelect" onchange="handleClientDropdownSelect(this.value)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition font-medium text-slate-800">
+                                        <option value="" disabled selected>-- Choose Client --</option>
+                                    </select>
+                                    <input type="text" id="clientNameInput" oninput="onClientSelect()" placeholder="Or type new client name..." class="hidden mt-2 w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none font-medium">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">WhatsApp Phone <span class="text-red-500">*</span></label>
+                                <div class="flex">
+                                    <span class="inline-flex items-center px-3 text-sm text-slate-600 bg-slate-200 border border-r-0 border-slate-300 rounded-l-lg font-medium">+91</span>
+                                    <input type="tel" id="clientPhone" placeholder="9876543210" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-r-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Purchased Items Table -->
+                        <div class="mt-6">
+                            <div class="flex items-center justify-between mb-3">
+                                <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                                    <i class="fa-solid fa-boxes-packing text-emerald-500"></i> 2. Purchased Items
+                                </h2>
+                                <button onclick="addItemRow()" class="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+                                    <i class="fa-solid fa-plus"></i> Add Item
+                                </button>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead>
+                                        <tr class="text-xs uppercase bg-slate-100 text-slate-600 font-semibold">
+                                            <th class="p-2.5 rounded-l-lg">Product Name</th>
+                                            <th class="p-2.5 w-24">Qty</th>
+                                            <th class="p-2.5 w-28">Rate (₹)</th>
+                                            <th class="p-2.5 w-28">Amount (₹)</th>
+                                            <th class="p-2.5 w-12 text-center rounded-r-lg">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="itemsContainer" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Payment Adjustment -->
+                        <div class="mt-6 pt-6 border-t border-slate-100">
+                            <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-wallet text-emerald-500"></i> 3. Payment Status & Balances
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Previous Due (₹)</label>
+                                    <input type="number" id="previousDue" value="0" min="0" oninput="calculateBill()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Payment Status</label>
+                                    <select id="paymentStatus" onchange="handleStatusChange()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition font-medium">
+                                        <option value="Paid">Fully Paid</option>
+                                        <option value="Partial">Partially Paid</option>
+                                        <option value="Pending" selected>Pending / Unpaid</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Amount Paid (₹)</label>
+                                    <input type="number" id="amountPaid" value="0" min="0" oninput="calculateBill()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition">
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Billing Summary Sidebar -->
-            <div class="space-y-6">
-                <div class="bg-slate-900 text-white rounded-2xl shadow-xl p-6 relative overflow-hidden">
-                    <div class="absolute -right-8 -top-8 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <!-- Billing Summary Sidebar -->
+                <div class="space-y-6">
+                    <div class="bg-slate-900 text-white rounded-2xl shadow-xl p-6 relative overflow-hidden">
+                        <div class="absolute -right-8 -top-8 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-                    <h3 class="text-sm uppercase font-semibold text-slate-400 tracking-wider mb-4">Invoice Summary</h3>
+                        <h3 class="text-sm uppercase font-semibold text-slate-400 tracking-wider mb-4">Invoice Summary</h3>
 
-                    <div class="space-y-3 border-b border-slate-800 pb-4 text-sm">
-                        <div class="flex justify-between text-slate-300">
-                            <span>Subtotal (Items):</span>
-                            <span class="font-medium text-white" id="summarySubtotal">₹0.00</span>
+                        <div class="space-y-3 border-b border-slate-800 pb-4 text-sm">
+                            <div class="flex justify-between text-slate-300">
+                                <span>Subtotal (Items):</span>
+                                <span class="font-medium text-white" id="summarySubtotal">₹0.00</span>
+                            </div>
+                            <div class="flex justify-between text-slate-300">
+                                <span>Previous Due:</span>
+                                <span class="font-medium text-amber-400" id="summaryPreviousDue">+ ₹0.00</span>
+                            </div>
+                            <div class="flex justify-between text-slate-300 pt-2 border-t border-slate-800 font-semibold text-base">
+                                <span class="text-white">Total Payable:</span>
+                                <span class="text-white" id="summaryTotalPayable">₹0.00</span>
+                            </div>
+                            <div class="flex justify-between text-slate-300">
+                                <span>Amount Paid:</span>
+                                <span class="font-medium text-emerald-400" id="summaryAmountPaid">- ₹0.00</span>
+                            </div>
                         </div>
-                        <div class="flex justify-between text-slate-300">
-                            <span>Previous Due:</span>
-                            <span class="font-medium text-amber-400" id="summaryPreviousDue">+ ₹0.00</span>
-                        </div>
-                        <div class="flex justify-between text-slate-300 pt-2 border-t border-slate-800 font-semibold text-base">
-                            <span class="text-white">Total Payable:</span>
-                            <span class="text-white" id="summaryTotalPayable">₹0.00</span>
-                        </div>
-                        <div class="flex justify-between text-slate-300">
-                            <span>Amount Paid:</span>
-                            <span class="font-medium text-emerald-400" id="summaryAmountPaid">- ₹0.00</span>
-                        </div>
-                    </div>
 
-                    <div class="pt-4 mb-6">
-                        <span class="text-xs uppercase font-semibold text-slate-400 tracking-wider">Remaining Balance</span>
-                        <div class="text-3xl font-extrabold text-amber-400 mt-1" id="summaryBalanceDue">₹0.00</div>
-                    </div>
+                        <div class="pt-4 mb-6">
+                            <span class="text-xs uppercase font-semibold text-slate-400 tracking-wider">Remaining Balance</span>
+                            <div class="text-3xl font-extrabold text-amber-400 mt-1" id="summaryBalanceDue">₹0.00</div>
+                        </div>
 
-                    <!-- Main Action Buttons -->
-                    <div class="space-y-3">
-                        <button onclick="sendWhatsAppInvoice()" class="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 transition active:scale-[0.98]">
-                            <i class="fa-brands fa-whatsapp text-xl"></i> Send WhatsApp Invoice
-                        </button>
-                        <button onclick="saveEntryToSheet()" id="saveBtn" class="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl border border-slate-700 flex items-center justify-center gap-2 transition active:scale-[0.98]">
-                            <i class="fa-solid fa-cloud-arrow-up"></i> Save Entry to Google Sheet
-                        </button>
+                        <!-- Main Action Buttons -->
+                        <div class="space-y-3">
+                            <button onclick="sendWhatsAppInvoice()" class="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 transition active:scale-[0.98]">
+                                <i class="fa-brands fa-whatsapp text-xl"></i> Send WhatsApp Invoice
+                            </button>
+                            <button onclick="saveEntryToSheet()" id="saveBtn" class="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl border border-slate-700 flex items-center justify-center gap-2 transition active:scale-[0.98]">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Save Entry to Google Sheet[cite: 4]
+                            </button>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Toast Message Notification -->
-                <div id="toast" class="hidden p-4 rounded-xl text-sm font-medium text-center shadow-lg transition-all duration-300"></div>
             </div>
         </div>
+
+        <!-- ================= PAGE 2: COLLECT PAYMENTS VIEW ================= -->
+        <div id="paymentsPage" class="hidden space-y-6 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 md:p-8 max-w-2xl mx-auto">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-hand-holding-dollar text-emerald-600"></i> Collect Payment & Clear Balance
+            </h2>
+            <p class="text-xs text-slate-500 -mt-4">Select a B2B client, review their outstanding balance, and log incoming payments directly into your database.</p>
+
+            <!-- Select Client -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Select Client <span class="text-red-500">*</span></label>
+                <select id="payClientSelect" onchange="onPaymentClientSelect()" class="w-full px-3.5 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none">
+                    <option value="" disabled selected>-- Choose Client --</option>
+                </select>
+            </div>
+
+            <!-- Current Balance Card -->
+            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+                <span class="text-sm font-semibold text-slate-600">Current Outstanding Due:</span>
+                <span id="payCurrentDue" data-due="0" class="text-lg font-bold text-rose-600">₹0.00</span>
+            </div>
+
+            <!-- Amount Paid Input -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Amount Paid Now (₹) <span class="text-red-500">*</span></label>
+                <input type="number" id="payAmountInput" oninput="calculateNewBalance()" placeholder="Enter amount collected..." class="w-full px-3.5 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none">
+            </div>
+
+            <!-- New Balance Preview -->
+            <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-200 flex justify-between items-center">
+                <span class="text-sm font-bold text-emerald-800">New Balance Due After Payment:</span>
+                <span id="payNewBalance" class="text-xl font-extrabold text-emerald-900">₹0.00</span>
+            </div>
+
+            <!-- Submit Payment Button -->
+            <button onclick="submitPaymentToSheet()" id="savePaymentBtn" class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 transition cursor-pointer">
+                <i class="fa-solid fa-check-to-slot"></i> Update Payment & Balance in Sheet
+            </button>
+        </div>
+
+        <!-- Toast Message Notification -->
+        <div id="toast" class="hidden p-4 rounded-xl text-sm font-medium text-center shadow-lg transition-all duration-300 fixed bottom-5 right-5 max-w-sm z-50"></div>
     </div>
 
     <!-- Google Sheet Web App Settings Modal -->
@@ -253,7 +282,7 @@ input[type=number] {
                 </button>
             </div>
             <p class="text-xs text-slate-500 mb-4">
-                Paste your deployed Google Apps Script Web App URL below to fetch master client/product rates and push billing entries automatically.
+                Paste your deployed Google Apps Script Web App URL below to fetch master client/product rates and push billing entries automatically.[cite: 4]
             </p>
             <div class="space-y-4">
                 <div>
@@ -277,48 +306,182 @@ input[type=number] {
     let selectedDeliveryDate = new Date().toISOString().split('T')[0];
 
     window.onload = function() {
-    initDeliveryDate();
-    loadAppInstantly();
-};
+        initDeliveryDate();
+        loadAppInstantly();
+    };
 
-function loadAppInstantly() {
-    const url = getScriptUrl();
-    const cachedData = localStorage.getItem('quickbill_cached_sheet_data');
+    function loadAppInstantly() {
+        const url = getScriptUrl();
+        const cachedData = localStorage.getItem('quickbill_cached_sheet_data');
 
-    // 1. If cached data exists on this browser, load it instantly (0 sec delay)
-    if (cachedData) {
-        try {
-            const parsed = JSON.parse(cachedData);
-            clientsData = parsed.clients || [];
-            productsData = parsed.products || [];
-            
-            items = [];
-            addItemRow();
-            updateDatalists();
-            updateStatusBanner(true, "Connected (Cached)");
-        } catch (e) {
-            console.warn("Invalid cache payload:", e);
+        if (cachedData) {
+            try {
+                const parsed = JSON.parse(cachedData);
+                clientsData = parsed.clients || [];
+                productsData = parsed.products || [];
+                items = [];
+                addItemRow();
+                updateDatalists();
+                updateStatusBanner(true, "Connected (Cached)");
+            } catch (e) {
+                console.warn("Invalid cache payload:", e);
+            }
+        } else {
+            updateStatusBanner(true, "Connecting to database...");
         }
-    } else {
-        // 2. On a fresh device/incognito window, show a temporary connecting state
-        updateStatusBanner(true, "Connecting to database...");
+
+        if (url) {
+            fetchSheetDataSilent();
+        } else {
+            useMockData();
+        }
     }
 
-    // 3. Perform live background fetch using default/saved URL
-    if (url) {
-        fetchSheetDataSilent();
-    } else {
-        useMockData();
+    // --- Navigation Tabs ---
+    function switchTab(tabName) {
+        const billingPage = document.getElementById('billingPage');
+        const paymentsPage = document.getElementById('paymentsPage');
+        const navBilling = document.getElementById('navBillingTab');
+        const navPayments = document.getElementById('navPaymentsTab');
+
+        if (tabName === 'billing') {
+            if (paymentsPage) paymentsPage.classList.add('hidden');
+            if (billingPage) billingPage.classList.remove('hidden');
+            if (navBilling) navBilling.className = "flex-1 py-2.5 text-sm font-bold rounded-xl bg-white text-slate-800 shadow-sm transition flex items-center justify-center gap-2";
+            if (navPayments) navPayments.className = "flex-1 py-2.5 text-sm font-bold rounded-xl text-slate-600 hover:text-slate-800 transition flex items-center justify-center gap-2";
+        } else {
+            if (billingPage) billingPage.classList.add('hidden');
+            if (paymentsPage) paymentsPage.classList.remove('hidden');
+            if (navPayments) navPayments.className = "flex-1 py-2.5 text-sm font-bold rounded-xl bg-white text-slate-800 shadow-sm transition flex items-center justify-center gap-2";
+            if (navBilling) navBilling.className = "flex-1 py-2.5 text-sm font-bold rounded-xl text-slate-600 hover:text-slate-800 transition flex items-center justify-center gap-2";
+            populatePaymentClientDropdown();
+        }
     }
-}
-        function resetSaveButton() {
-    const saveBtn = document.getElementById('saveSheetBtn');
-    if (saveBtn) {
-        saveBtn.disabled = false;
-        saveBtn.className = "w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer";
-        saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Save Entry to Google Sheet`;
+
+    function populatePaymentClientDropdown() {
+        const select = document.getElementById('payClientSelect');
+        if (!select) return;
+        let html = `<option value="" disabled selected>-- Choose Client --</option>`;
+        clientsData.forEach(c => {
+            const name = typeof c === 'string' ? c : c.name;
+            if (name) {
+                html += `<option value="${name}">${name}</option>`;
+            }
+        });
+        select.innerHTML = html;
     }
-}
+
+    function onPaymentClientSelect() {
+        const clientName = document.getElementById('payClientSelect').value;
+        const found = clientsData.find(c => (c.name || c) === clientName);
+        const due = found && found.previousDue !== undefined ? Number(found.previousDue) : 0;
+        
+        const dueEl = document.getElementById('payCurrentDue');
+        if (dueEl) {
+            dueEl.dataset.due = due;
+            dueEl.innerText = `₹${due.toFixed(2)}`;
+        }
+        calculateNewBalance();
+    }
+
+    function calculateNewBalance() {
+        const dueEl = document.getElementById('payCurrentDue');
+        const currentDue = dueEl ? parseFloat(dueEl.dataset.due || 0) : 0;
+        const paidInput = document.getElementById('payAmountInput');
+        const paid = paidInput ? parseFloat(paidInput.value || 0) : 0;
+        const newBalance = Math.max(0, currentDue - paid);
+        
+        const newBalEl = document.getElementById('payNewBalance');
+        if (newBalEl) {
+            newBalEl.innerText = `₹${newBalance.toFixed(2)}`;
+        }
+    }
+
+    async function submitPaymentToSheet() {
+        const payBtn = document.getElementById('savePaymentBtn');
+        const clientName = document.getElementById('payClientSelect').value;
+        const amountPaid = parseFloat(document.getElementById('payAmountInput')?.value || 0);
+        const scriptUrl = getScriptUrl();
+
+        if (!scriptUrl) {
+            showToast("Please connect your Google Sheet URL in Settings first!", "error");
+            return;
+        }
+
+        if (!clientName) {
+            showToast("Please select a client!", "error");
+            return;
+        }
+
+        if (amountPaid <= 0) {
+            showToast("Please enter a valid payment amount!", "error");
+            return;
+        }
+
+        const dueEl = document.getElementById('payCurrentDue');
+        const currentDue = dueEl ? parseFloat(dueEl.dataset.due || 0) : 0;
+        const balanceDue = Math.max(0, currentDue - amountPaid);
+
+        if (payBtn) {
+            payBtn.disabled = true;
+            payBtn.style.opacity = "0.9";
+            payBtn.className = "w-full py-3.5 px-4 bg-blue-600 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-not-allowed";
+            payBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Updating Payment...`;
+        }
+
+        const payload = {
+            type: "payment",
+            date: new Date().toISOString().split('T')[0],
+            clientName: clientName,
+            amountPaid: amountPaid,
+            balanceDue: balanceDue,
+            paymentStatus: balanceDue === 0 ? "Fully Paid" : "Partially Paid"
+        };
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const liveUrl = scriptUrl + (scriptUrl.includes('?') ? '&' : '?') + 'nocache=' + Date.now();
+
+        try {
+            await fetch(liveUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            const found = clientsData.find(c => (c.name || c) === clientName);
+            if (found && typeof found === 'object') {
+                found.previousDue = balanceDue;
+            }
+
+            if (payBtn) {
+                payBtn.disabled = false;
+                payBtn.style.opacity = "1";
+                payBtn.className = "w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 transition cursor-pointer";
+                payBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> Payment Updated Successfully!`;
+            }
+
+            showToast("Payment recorded & balance updated in sheet!", "success");
+            if (document.getElementById('payAmountInput')) document.getElementById('payAmountInput').value = '';
+            onPaymentClientSelect();
+
+        } catch (err) {
+            clearTimeout(timeoutId);
+            console.error("Payment error:", err);
+            if (payBtn) {
+                payBtn.disabled = false;
+                payBtn.style.opacity = "1";
+                payBtn.className = "w-full py-3.5 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer";
+                payBtn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> Failed - Tap to Retry`;
+            }
+            showToast("Connection issue! Payment not saved. Please tap retry.", "error");
+        }
+    }
+
     // --- Delivery Date Management ---
     function initDeliveryDate() {
         handleDeliveryDateChange();
@@ -371,7 +534,6 @@ function loadAppInstantly() {
         }
     }
 
-    // --- Modal Management ---
     function toggleModal(id) {
         const modal = document.getElementById(id);
         if (modal) {
@@ -379,24 +541,10 @@ function loadAppInstantly() {
         }
     }
 
-    // --- URL & API Settings ---
-    // Replace the URL string below with your actual Google Apps Script Web App Deployment URL
-const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxHLejdbat04Uf-146TM9df_8PZf0VbgFhEaPh0pw6UPLNBQWMffdbZGRLRAnFvcTcq/exec";
+    const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxHLejdbat04Uf-146TM9df_8PZf0VbgFhEaPh0pw6UPLNBQWMffdbZGRLRAnFvcTcq/exec";
 
-function getScriptUrl() {
-    return localStorage.getItem('quickbill_script_url') || DEFAULT_SCRIPT_URL;
-}
-
-    function loadSavedScriptUrl() {
-        const url = getScriptUrl();
-        const input = document.getElementById('scriptUrlInput');
-        if (input) input.value = url;
-        
-        if (url) {
-            fetchSheetData();
-        } else {
-            useMockData();
-        }
+    function getScriptUrl() {
+        return localStorage.getItem('quickbill_script_url') || DEFAULT_SCRIPT_URL;
     }
 
     function saveScriptUrl() {
@@ -420,7 +568,6 @@ function getScriptUrl() {
         showToast("Reset to Mock Data", "info");
     }
 
-    // --- Data Sync ---
     function useMockData() {
         clientsData = [
             { name: "Yummy Section", phone: "9876543210", previousDue: 450, rates: { "Mix Veg Momo": 3.5, "Paneer": 4.5 } },
@@ -437,116 +584,110 @@ function getScriptUrl() {
     }
 
     function updateStatusBanner(isConnected, statusText = "") {
-    const banner = document.getElementById('connectionStatus');
-    if (!banner) return;
+        const banner = document.getElementById('connectionStatus');
+        if (!banner) return;
 
-    if (isConnected) {
-        banner.className = "mb-5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between";
-        banner.innerHTML = `
-            <span class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span>${statusText || 'Connected live to Google Sheet database.'}</span>
-            </span>
-            <button onclick="fetchSheetData()" id="syncBtn" class="px-2.5 py-1 bg-emerald-200 hover:bg-emerald-300 rounded-md font-semibold text-emerald-900 transition flex items-center gap-1">
-                <i class="fa-solid fa-rotate"></i> Sync
-            </button>
-        `;
-    } else {
-        banner.className = "mb-5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between";
-        banner.innerHTML = `
-            <span class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                <span>Not connected to Google Sheet. Connect in Settings.</span>
-            </span>
-            <button onclick="toggleModal('setupModal')" class="px-2.5 py-1 bg-amber-200 hover:bg-amber-300 rounded-md font-semibold text-amber-900 transition flex items-center gap-1">
-                <i class="fa-solid fa-plug"></i> Connect
-            </button>
-        `;
-    }
-}
-
-   async function fetchSheetDataSilent() {
-    const url = getScriptUrl();
-    if (!url) return;
-
-    try {
-        const cleanUrl = url.split('?')[0];
-        const cacheBusterUrl = `${cleanUrl}?t=${Date.now()}`;
-
-        const response = await fetch(cacheBusterUrl, { method: 'GET', redirect: 'follow' });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-
-        clientsData = data.clients || [];
-        productsData = data.products || [];
-
-        // Save fresh data to local storage for the next instant startup
-        localStorage.setItem('quickbill_cached_sheet_data', JSON.stringify({
-            clients: clientsData,
-            products: productsData,
-            syncedAt: new Date().toISOString()
-        }));
-
-        updateDatalists();
-        updateStatusBanner(true, "Connected live to Google Sheet");
-
-    } catch (err) {
-        console.error("Background sync error:", err);
-        // If background fetch fails, keep running smoothly on cached data
-        if (clientsData.length > 0) {
-            updateStatusBanner(true, "Connected (Offline / Cache)");
+        if (isConnected) {
+            banner.className = "mb-5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between";
+            banner.innerHTML = `
+                <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>${statusText || 'Connected live to Google Sheet database.'}</span>
+                </span>
+                <button onclick="fetchSheetData()" id="syncBtn" class="px-2.5 py-1 bg-emerald-200 hover:bg-emerald-300 rounded-md font-semibold text-emerald-900 transition flex items-center gap-1">
+                    <i class="fa-solid fa-rotate"></i> Sync
+                </button>
+            `;
         } else {
-            updateStatusBanner(false);
+            banner.className = "mb-5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between";
+            banner.innerHTML = `
+                <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span>Not connected to Google Sheet. Connect in Settings.</span>
+                </span>
+                <button onclick="toggleModal('setupModal')" class="px-2.5 py-1 bg-amber-200 hover:bg-amber-300 rounded-md font-semibold text-amber-900 transition flex items-center gap-1">
+                    <i class="fa-solid fa-plug"></i> Connect
+                </button>
+            `;
         }
     }
-}
 
-// Manual Sync Button Handler (Triggers toast notification)
-function fetchSheetData() {
-    showToast("Syncing fresh data from sheet...", "info");
-    fetchSheetDataSilent().then(() => {
-        showToast("Synced latest clients & rates successfully!", "success");
-    });
-}
+    async function fetchSheetDataSilent() {
+        const url = getScriptUrl();
+        if (!url) return;
+
+        try {
+            const cleanUrl = url.split('?')[0];
+            const cacheBusterUrl = `${cleanUrl}?t=${Date.now()}`;
+
+            const response = await fetch(cacheBusterUrl, { method: 'GET', redirect: 'follow' });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
+            clientsData = data.clients || [];
+            productsData = data.products || [];
+
+            localStorage.setItem('quickbill_cached_sheet_data', JSON.stringify({
+                clients: clientsData,
+                products: productsData,
+                syncedAt: new Date().toISOString()
+            }));
+
+            updateDatalists();
+            updateStatusBanner(true, "Connected live to Google Sheet");
+
+        } catch (err) {
+            console.error("Background sync error:", err);
+            if (clientsData.length > 0) {
+                updateStatusBanner(true, "Connected (Offline / Cache)");
+            } else {
+                updateStatusBanner(false);
+            }
+        }
+    }
+
+    function fetchSheetData() {
+        showToast("Syncing fresh data from sheet...", "info");
+        fetchSheetDataSilent().then(() => {
+            showToast("Synced latest clients & rates successfully!", "success");
+        });
+    }
 
     function updateDatalists() {
-    // Populate Client Native Dropdown
-    const clientSelect = document.getElementById('clientSelect');
-    if (clientSelect) {
-        let html = `<option value="" disabled selected>-- Choose Client --</option>`;
-        clientsData.forEach(c => {
-            const name = typeof c === 'string' ? c : c.name;
-            if (name) {
-                html += `<option value="${name}">${name}</option>`;
+        const clientSelect = document.getElementById('clientSelect');
+        if (clientSelect) {
+            let html = `<option value="" disabled selected>-- Choose Client --</option>`;
+            clientsData.forEach(c => {
+                const name = typeof c === 'string' ? c : c.name;
+                if (name) {
+                    html += `<option value="${name}">${name}</option>`;
+                }
+            });
+            html += `<option value="__NEW__">+ Enter New Client</option>`;
+            clientSelect.innerHTML = html;
+        }
+        renderItems();
+    }
+
+    function handleClientDropdownSelect(value) {
+        const customInput = document.getElementById('clientNameInput');
+        if (value === '__NEW__') {
+            if (customInput) {
+                customInput.classList.remove('hidden');
+                customInput.value = '';
+                customInput.focus();
             }
-        });
-        html += `<option value="__NEW__">+ Enter New Client</option>`;
-        clientSelect.innerHTML = html;
+        } else {
+            if (customInput) {
+                customInput.classList.add('hidden');
+                customInput.value = value;
+            }
+            onClientSelect();
+        }
     }
 
-    // Trigger item rendering to refresh product dropdown options
-    renderItems();
-}
-        function handleClientDropdownSelect(value) {
-    const customInput = document.getElementById('clientNameInput');
-    if (value === '__NEW__') {
-        if (customInput) {
-            customInput.classList.remove('hidden');
-            customInput.value = '';
-            customInput.focus();
-        }
-    } else {
-        if (customInput) {
-            customInput.classList.add('hidden');
-            customInput.value = value;
-        }
-        onClientSelect();
-    }
-}
-
-    // --- Item & Row Logic ---
     function addItemRow() {
         items.push({ id: Date.now() + Math.random(), name: '', qty: 1, rate: 0 });
         renderItems();
@@ -563,122 +704,113 @@ function fetchSheetData() {
     }
 
     function renderItems() {
-    const container = document.getElementById('itemsContainer');
-    if (!container) return;
+        const container = document.getElementById('itemsContainer');
+        if (!container) return;
 
-    if (items.length === 0) {
-        items.push({ id: Date.now(), name: '', qty: 1, rate: 0 });
-    }
-
-    container.innerHTML = items.map(item => `
-        <tr id="row-${item.id}" class="hover:bg-slate-50/50 transition">
-            <td class="p-2 min-w-[160px]">
-                <select 
-                    onchange="onProductSelect(${item.id}, this.value)" 
-                    class="w-full px-2.5 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white font-medium text-slate-800"
-                >
-                    <option value="" disabled ${!item.name ? 'selected' : ''}>-- Select Item --</option>
-                    ${productsData.map(p => {
-                        const pName = typeof p === 'string' ? p : p.name;
-                        return `<option value="${pName}" ${item.name === pName ? 'selected' : ''}>${pName}</option>`;
-                    }).join('')}
-                </select>
-            </td>
-            <td class="p-2 w-20">
-                <input 
-                    type="number" 
-                    min="1" 
-                    value="${item.qty}" 
-                    oninput="updateItem(${item.id}, 'qty', this.value)" 
-                    onfocus="this.select()" 
-                    class="w-full px-2.5 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-center font-medium"
-                >
-            </td>
-            <td class="p-2 w-24">
-                <input 
-                    type="number" 
-                    min="0" 
-                    value="${item.rate}" 
-                    oninput="updateItem(${item.id}, 'rate', this.value)" 
-                    onfocus="this.select()" 
-                    class="w-full px-2.5 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-center font-medium"
-                >
-            </td>
-            <td class="p-2 text-right font-semibold text-slate-700 item-row-total whitespace-nowrap">
-                ₹${(item.qty * item.rate).toFixed(2)}
-            </td>
-            <td class="p-2 text-center w-10">
-                <button onclick="removeItemRow(${item.id})" class="text-slate-400 hover:text-red-500 p-1.5 transition">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function updateItem(id, field, value) {
-    const item = items.find(i => i.id === id);
-    if (!item) return;
-
-    // 1. Update internal state value
-    item[field] = field === 'name' ? value : Math.max(0, parseFloat(value) || 0);
-
-    // 2. Target and update the row total directly in DOM (prevents focus loss during rapid typing)
-    const rowEl = document.getElementById(`row-${id}`);
-    if (rowEl) {
-        const totalCell = rowEl.querySelector('.item-row-total');
-        if (totalCell) {
-            totalCell.innerText = `₹${(item.qty * item.rate).toFixed(2)}`;
-        }
-    }
-
-    // 3. Recalculate full bill summary in real-time
-    calculateBill();
-}
-
-   function onClientSelect() {
-    const selectedName = document.getElementById('clientNameInput')?.value.trim();
-    if (!selectedName) {
-        currentClientRates = {};
-        if (document.getElementById('previousDue')) document.getElementById('previousDue').value = 0;
-        calculateBill();
-        return;
-    }
-
-    const foundClient = clientsData.find(c => c.name && c.name.toLowerCase() === selectedName.toLowerCase());
-
-    if (foundClient) {
-        // Set Phone
-        if (document.getElementById('clientPhone')) {
-            document.getElementById('clientPhone').value = foundClient.phone || '';
-        }
-        
-        // Set Latest Outstanding from Sheet (remains manually editable by user)
-        if (document.getElementById('previousDue')) {
-            document.getElementById('previousDue').value = foundClient.previousDue !== undefined ? foundClient.previousDue : 0;
+        if (items.length === 0) {
+            items.push({ id: Date.now(), name: '', qty: 1, rate: 0 });
         }
 
-        currentClientRates = foundClient.rates || {};
+        container.innerHTML = items.map(item => `
+            <tr id="row-${item.id}" class="hover:bg-slate-50/50 transition">
+                <td class="p-2 min-w-[160px]">
+                    <select 
+                        onchange="onProductSelect(${item.id}, this.value)" 
+                        class="w-full px-2.5 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white font-medium text-slate-800"
+                    >
+                        <option value="" disabled ${!item.name ? 'selected' : ''}>-- Select Item --</option>
+                        ${productsData.map(p => {
+                            const pName = typeof p === 'string' ? p : p.name;
+                            return `<option value="${pName}" ${item.name === pName ? 'selected' : ''}>${pName}</option>`;
+                        }).join('')}
+                    </select>
+                </td>
+                <td class="p-2 w-20">
+                    <input 
+                        type="number" 
+                        min="1" 
+                        value="${item.qty}" 
+                        oninput="updateItem(${item.id}, 'qty', this.value)" 
+                        onfocus="this.select()" 
+                        class="w-full px-2.5 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-center font-medium"
+                    >
+                </td>
+                <td class="p-2 w-24">
+                    <input 
+                        type="number" 
+                        min="0" 
+                        value="${item.rate}" 
+                        oninput="updateItem(${item.id}, 'rate', this.value)" 
+                        onfocus="this.select()" 
+                        class="w-full px-2.5 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-center font-medium"
+                    >
+                </td>
+                <td class="p-2 text-right font-semibold text-slate-700 item-row-total whitespace-nowrap">
+                    ₹${(item.qty * item.rate).toFixed(2)}
+                </td>
+                <td class="p-2 text-center w-10">
+                    <button onclick="removeItemRow(${item.id})" class="text-slate-400 hover:text-red-500 p-1.5 transition">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
 
-        // Apply client-specific item rates if available
-        items.forEach(item => {
-            if (item.name && currentClientRates[item.name] !== undefined) {
-                item.rate = currentClientRates[item.name];
+    function updateItem(id, field, value) {
+        const item = items.find(i => i.id === id);
+        if (!item) return;
+
+        item[field] = field === 'name' ? value : Math.max(0, parseFloat(value) || 0);
+
+        const rowEl = document.getElementById(`row-${id}`);
+        if (rowEl) {
+            const totalCell = rowEl.querySelector('.item-row-total');
+            if (totalCell) {
+                totalCell.innerText = `₹${(item.qty * item.rate).toFixed(2)}`;
             }
-        });
-
-        renderItems();
-        calculateBill(); // Recalculate Total Payable with updated Previous Due
-        showToast(`Loaded details & outstanding due for ${foundClient.name}`, "info");
+        }
+        calculateBill();
     }
-}
+
+    function onClientSelect() {
+        const selectedName = document.getElementById('clientNameInput')?.value.trim();
+        if (!selectedName) {
+            currentClientRates = {};
+            if (document.getElementById('previousDue')) document.getElementById('previousDue').value = 0;
+            calculateBill();
+            return;
+        }
+
+        const foundClient = clientsData.find(c => c.name && c.name.toLowerCase() === selectedName.toLowerCase());
+
+        if (foundClient) {
+            if (document.getElementById('clientPhone')) {
+                document.getElementById('clientPhone').value = foundClient.phone || '';
+            }
+            if (document.getElementById('previousDue')) {
+                document.getElementById('previousDue').value = foundClient.previousDue !== undefined ? foundClient.previousDue : 0;
+            }
+
+            currentClientRates = foundClient.rates || {};
+
+            items.forEach(item => {
+                if (item.name && currentClientRates[item.name] !== undefined) {
+                    item.rate = currentClientRates[item.name];
+                }
+            });
+
+            renderItems();
+            calculateBill();
+            showToast(`Loaded details & outstanding due for ${foundClient.name}`, "info");
+        }
+    }
 
     function onProductSelect(itemId, selectedName) {
         const item = items.find(i => i.id === itemId);
         if (!item) return;
 
         item.name = selectedName;
-        
         if (selectedName && currentClientRates[selectedName] !== undefined) {
             item.rate = currentClientRates[selectedName];
         } else {
@@ -725,248 +857,200 @@ function updateItem(id, field, value) {
         calculateBill();
     }
 
-    // --- Save & WhatsApp Actions ---
-function sendWhatsAppInvoice() {
-    try {
-        // 1. Get Client Info & Status
+    function sendWhatsAppInvoice() {
+        try {
+            const clientSelect = document.getElementById('clientSelect');
+            const clientInput = document.getElementById('clientNameInput');
+            const name = (clientInput && !clientInput.classList.contains('hidden')) 
+                ? clientInput.value.trim() 
+                : (clientSelect ? clientSelect.value.trim() : '');
+                
+            const phone = document.getElementById('clientPhone')?.value.trim();
+            const orderStatus = document.getElementById('orderStatusSelect')?.value || 'Delivered';
+
+            if (!name || !phone || name === '-- Choose Client --') {
+                showToast("Please select/enter Client Name and Phone Number!", "error");
+                return;
+            }
+
+            const calc = calculateBill() || { subtotal: 0, previousDue: 0, totalPayable: 0, amountPaid: 0, balanceDue: 0, status: 'PENDING' };
+
+            let itemsList = ``;
+            if (Array.isArray(items)) {
+                items.forEach((item) => {
+                    if (item.name && item.qty > 0) {
+                        itemsList += `${item.qty} ${item.name} : ₹${(item.qty * item.rate).toFixed(0)}\n`;
+                    }
+                });
+            }
+
+            let formattedDate = selectedDeliveryDate || '';
+            if (selectedDeliveryDate) {
+                const parts = selectedDeliveryDate.split('-');
+                if (parts.length === 3) {
+                    formattedDate = `${parts[2]}-${parts[1]}-${parts[0].slice(-2)}`;
+                }
+            }
+
+            const statusUpper = (calc.status || 'PENDING').toUpperCase();
+            let paymentStatusIcon = '❌';
+            if (statusUpper === 'PAID') {
+                paymentStatusIcon = '✅';
+            } else if (statusUpper.includes('PARTIAL') || statusUpper.includes('PARTIALLY')) {
+                paymentStatusIcon = '⚠️';
+            }
+
+            let paymentSummary = ``;
+            paymentSummary += `✅ Total Bill: ₹${Number(calc.subtotal || 0).toFixed(0)}\n`;
+            if (Number(calc.previousDue || 0) > 0) {
+                paymentSummary += `📌 Previous Dues: ₹${Number(calc.previousDue).toFixed(0)} /-\n`;
+            }
+            paymentSummary += `💰 Total Payable: ₹${Number(calc.totalPayable || 0).toFixed(0)}\n`;
+            if (Number(calc.amountPaid || 0) > 0) {
+                paymentSummary += `💳 Amount Paid: ₹${Number(calc.amountPaid).toFixed(0)}\n`;
+            }
+            if (Number(calc.balanceDue || 0) > 0) {
+                paymentSummary += `⚠️ Balance Due: ₹${Number(calc.balanceDue).toFixed(2)}\n`;
+            }
+            paymentSummary += `\n♦️ Payment Status: ${statusUpper}${paymentStatusIcon}\n`;
+            paymentSummary += `----------------------------------\n`;
+
+            let msg = ``;
+            switch (orderStatus) {
+                case 'Received':
+                    msg += `*ORDER CONFIRMATION - MX FOODS*\nDear Customer,\n\nWe have *Received* your Order!\n\nHere’s your Bill Summary 🧾\n\n` + itemsList + `\n` + paymentSummary + `_Thank you for choosing MX Foods!_ `;
+                    break;
+                case 'Ready for Dispatch':
+                    msg += `Dear Customer,\n\n*Your Order with MX Foods is Ready for Dispatch* 📦✅\n\nHere’s your Bill Summary 🧾\n\n` + itemsList + `\n` + paymentSummary + `_Thank you for choosing MX Foods!_ `;
+                    break;
+                case 'Dispatched':
+                    msg += `Dear Customer,\n\n*Your Order is Dispatched Successfully* 🚚✅\n\nHere’s your Bill Summary 🧾\n\n` + itemsList + `\n` + paymentSummary + `_Thank you for choosing MX Foods!_ `;
+                    break;
+                case 'Delivered':
+                default:
+                    msg += `Dear Customer,\n\n*Your Order with MX Foods is Delivered Successfully* ✅✅\n\n📦 Delivered Date: ${formattedDate}\n\nHere’s your Bill Summary 🧾\n\n` + itemsList + `\n` + paymentSummary + `Thank you for choosing MX Foods! `;
+                    break;
+            }
+
+            const cleanPhone = phone.replace(/\D/g, '');
+            const fullPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
+            const encodedUrl = `https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`;
+
+            window.open(encodedUrl, '_blank');
+            showToast(`Opening WhatsApp (${orderStatus})...`, "success");
+
+        } catch (err) {
+            console.error("WhatsApp Invoice Error:", err);
+            showToast("Error generating WhatsApp message. Check console.", "error");
+        }
+    }
+
+    async function saveEntryToSheet() {
+        console.log("Save button tapped!");
+
+        const saveBtn = document.getElementById('saveSheetBtn') || 
+                        document.getElementById('saveBtn') || 
+                        document.getElementById('submitBtn');
+
+        if (!saveBtn) {
+            console.error("Save button element not found in HTML!");
+            showToast("Error: Save button element missing in HTML.", "error");
+            return;
+        }
+
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = "0.9";
+        saveBtn.className = "w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-not-allowed";
+        saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Saving to Google Sheet...`;
+
+        const scriptUrl = getScriptUrl();
+
+        if (!scriptUrl) {
+            showToast("Please connect your Google Sheet URL in Settings first!", "error");
+            resetSaveButton();
+            return;
+        }
+
         const clientSelect = document.getElementById('clientSelect');
         const clientInput = document.getElementById('clientNameInput');
         const name = (clientInput && !clientInput.classList.contains('hidden')) 
             ? clientInput.value.trim() 
             : (clientSelect ? clientSelect.value.trim() : '');
-            
-        const phone = document.getElementById('clientPhone')?.value.trim();
-        const orderStatus = document.getElementById('orderStatusSelect')?.value || 'Delivered';
 
-        if (!name || !phone || name === '-- Choose Client --') {
-            showToast("Please select/enter Client Name and Phone Number!", "error");
+        if (!name || name === '-- Choose Client --') {
+            showToast("Please select or enter a client name!", "error");
+            resetSaveButton();
             return;
         }
 
-        const calc = calculateBill() || { subtotal: 0, previousDue: 0, totalPayable: 0, amountPaid: 0, balanceDue: 0, status: 'PENDING' };
+        const calc = calculateBill();
 
-        // 2. Format Items List
-        let itemsList = ``;
-        if (Array.isArray(items)) {
-            items.forEach((item) => {
-                if (item.name && item.qty > 0) {
-                    itemsList += `${item.qty} ${item.name} : ₹${(item.qty * item.rate).toFixed(0)}\n`;
-                }
+        const datePicker = document.getElementById('deliveryDate') || document.getElementById('orderDate') || document.getElementById('dateInput');
+        const activeDate = (datePicker && datePicker.value) 
+            ? datePicker.value 
+            : ((typeof selectedDeliveryDate !== 'undefined' && selectedDeliveryDate) ? selectedDeliveryDate : new Date().toISOString().split('T')[0]);
+
+        const payload = {
+            date: activeDate,
+            clientName: name,
+            phone: document.getElementById('clientPhone')?.value.trim() || '',
+            orderStatus: document.getElementById('orderStatusSelect')?.value || 'Delivered',
+            items: items.filter(i => i.name),
+            subtotal: calc.subtotal,
+            previousDue: calc.previousDue,
+            totalPayable: calc.totalPayable,
+            amountPaid: calc.amountPaid,
+            balanceDue: calc.balanceDue,
+            paymentStatus: calc.status
+        };
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const liveUrl = scriptUrl + (scriptUrl.includes('?') ? '&' : '?') + 'nocache=' + Date.now();
+
+        try {
+            await fetch(liveUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload),
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId);
+
+            saveBtn.disabled = true;
+            saveBtn.style.opacity = "0.7";
+            saveBtn.className = "w-full py-3 px-4 bg-slate-200 text-slate-700 font-bold rounded-xl shadow-none flex items-center justify-center gap-2 cursor-not-allowed";
+            saveBtn.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i> Entry Saved`;
+
+            showToast("Entry saved to Google Sheet!", "success");
+
+        } catch (err) {
+            clearTimeout(timeoutId);
+            console.error("Save error or timeout:", err);
+
+            saveBtn.disabled = false;
+            saveBtn.style.opacity = "1";
+            saveBtn.className = "w-full py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer";
+            saveBtn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> Failed - Tap to Retry`;
+
+            showToast("Connection issue! Entry not saved. Please tap retry.", "error");
         }
-
-        // 3. Format Date as DD-MM-YY
-        let formattedDate = selectedDeliveryDate || '';
-        if (selectedDeliveryDate) {
-            const parts = selectedDeliveryDate.split('-');
-            if (parts.length === 3) {
-                formattedDate = `${parts[2]}-${parts[1]}-${parts[0].slice(-2)}`;
-            }
-        }
-
-        // 4. Payment Status Icon Logic
-        const statusUpper = (calc.status || 'PENDING').toUpperCase();
-        let paymentStatusIcon = '❌';
-        if (statusUpper === 'PAID') {
-            paymentStatusIcon = '✅';
-        } else if (statusUpper.includes('PARTIAL') || statusUpper.includes('PARTIALLY')) {
-            paymentStatusIcon = '⚠️';
-        }
-
-        // 5. Conditional Payment Summary (Hides items if amount is 0)
-        let paymentSummary = ``;
-        paymentSummary += `✅ Total Bill: ₹${Number(calc.subtotal || 0).toFixed(0)}\n`;
-        
-        // Show Previous Dues only if > 0
-        if (Number(calc.previousDue || 0) > 0) {
-            paymentSummary += `📌 Previous Dues: ₹${Number(calc.previousDue).toFixed(0)} /-\n`;
-        }
-        
-        // Total Payable should always be visible
-        paymentSummary += `💰 Total Payable: ₹${Number(calc.totalPayable || 0).toFixed(0)}\n`;
-        
-        // Show Amount Paid only if > 0
-        if (Number(calc.amountPaid || 0) > 0) {
-            paymentSummary += `💳 Amount Paid: ₹${Number(calc.amountPaid).toFixed(0)}\n`;
-        }
-        
-        // Show Balance Due only if > 0
-        if (Number(calc.balanceDue || 0) > 0) {
-            paymentSummary += `⚠️ Balance Due: ₹${Number(calc.balanceDue).toFixed(2)}\n`;
-        }
-        
-        paymentSummary += `\n♦️ Payment Status: ${statusUpper}${paymentStatusIcon}\n`;
-        paymentSummary += `----------------------------------\n`;
-
-        let msg = ``;
-
-        // 6. Dynamic Templates
-        switch (orderStatus) {
-            case 'Received':
-                msg += `*ORDER CONFIRMATION - MX FOODS*\n`;
-                msg += `Dear Customer,\n\n`;
-                msg += `We have *Received* your Order!\n\n`;
-                msg += `Here’s your Bill Summary 🧾\n\n`;
-                msg += itemsList + `\n`;
-                msg += paymentSummary;
-                msg += `_Thank you for choosing MX Foods!_ `;
-                break;
-
-            case 'Ready for Dispatch':
-                msg += `Dear Customer,\n\n`;
-                msg += `*Your Order with MX Foods is Ready for Dispatch* 📦✅\n\n`;
-                msg += `Here’s your Bill Summary 🧾\n\n`;
-                msg += itemsList + `\n`;
-                msg += paymentSummary;
-                msg += `_Thank you for choosing MX Foods!_ `;
-                break;
-
-            case 'Dispatched':
-                msg += `Dear Customer,\n\n`;
-                msg += `*Your Order is Dispatched Successfully* 🚚✅\n\n`;
-                msg += `Here’s your Bill Summary 🧾\n\n`;
-                msg += itemsList + `\n`;
-                msg += paymentSummary;
-                msg += `_Thank you for choosing MX Foods!_ `;
-                break;
-
-            case 'Delivered':
-            default:
-                msg += `Dear Customer,\n\n`;
-                msg += `*Your Order with MX Foods is Delivered Successfully* ✅✅\n\n`;
-                msg += `📦 Delivered Date: ${formattedDate}\n\n`;
-                msg += `Here’s your Bill Summary 🧾\n\n`;
-                msg += itemsList + `\n`;
-                msg += paymentSummary;
-                msg += `Thank you for choosing MX Foods! `;
-                break;
-        }
-
-        // 7. Clean Phone & Send via wa.me URL
-        const cleanPhone = phone.replace(/\D/g, '');
-        const fullPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
-        const encodedUrl = `https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`;
-
-        window.open(encodedUrl, '_blank');
-        showToast(`Opening WhatsApp (${orderStatus})...`, "success");
-
-    } catch (err) {
-        console.error("WhatsApp Invoice Error:", err);
-        showToast("Error generating WhatsApp message. Check console.", "error");
-    }
-}
-
-   async function saveEntryToSheet() {
-    console.log("Save button tapped!");
-
-    const saveBtn = document.getElementById('saveSheetBtn') || 
-                    document.getElementById('saveBtn') || 
-                    document.getElementById('submitBtn');
-
-    if (!saveBtn) {
-        console.error("Save button element not found in HTML!");
-        showToast("Error: Save button element missing in HTML.", "error");
-        return;
     }
 
-    // 🚀 1. INSTANT VISUAL FEEDBACK
-    saveBtn.disabled = true;
-    saveBtn.style.opacity = "0.9";
-    saveBtn.className = "w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-not-allowed";
-    saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Saving to Google Sheet...`;
-
-    const scriptUrl = getScriptUrl();
-
-    if (!scriptUrl) {
-        showToast("Please connect your Google Sheet URL in Settings first!", "error");
-        resetSaveButton();
-        return;
+    function resetSaveButton() {
+        const saveBtn = document.getElementById('saveSheetBtn') || 
+                        document.getElementById('saveBtn') || 
+                        document.getElementById('submitBtn');
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.style.opacity = "1";
+            saveBtn.className = "w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl border border-slate-700 flex items-center justify-center gap-2 transition active:scale-[0.98]";
+            saveBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Save Entry to Google Sheet`;
+        }
     }
 
-    const clientSelect = document.getElementById('clientSelect');
-    const clientInput = document.getElementById('clientNameInput');
-    const name = (clientInput && !clientInput.classList.contains('hidden')) 
-        ? clientInput.value.trim() 
-        : (clientSelect ? clientSelect.value.trim() : '');
-
-    // 🛑 VALIDATION CHECK: Instantly stops loader and resets button if client name is missing
-    if (!name || name === '-- Choose Client --') {
-        showToast("Please select or enter a client name!", "error");
-        resetSaveButton();
-        return;
-    }
-
-    const calc = calculateBill();
-
-    // Grab Date
-    const datePicker = document.getElementById('deliveryDate') || document.getElementById('orderDate') || document.getElementById('dateInput');
-    const activeDate = (datePicker && datePicker.value) 
-        ? datePicker.value 
-        : ((typeof selectedDeliveryDate !== 'undefined' && selectedDeliveryDate) ? selectedDeliveryDate : new Date().toISOString().split('T')[0]);
-
-    const payload = {
-        date: activeDate,
-        clientName: name,
-        phone: document.getElementById('clientPhone')?.value.trim() || '',
-        orderStatus: document.getElementById('orderStatusSelect')?.value || 'Delivered',
-        items: items.filter(i => i.name),
-        subtotal: calc.subtotal,
-        previousDue: calc.previousDue,
-        totalPayable: calc.totalPayable,
-        amountPaid: calc.amountPaid,
-        balanceDue: calc.balanceDue,
-        paymentStatus: calc.status
-    };
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
-    const liveUrl = scriptUrl + (scriptUrl.includes('?') ? '&' : '?') + 'nocache=' + Date.now();
-
-    try {
-        await fetch(liveUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload),
-            signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        // ✅ SUCCESS STATE
-        saveBtn.disabled = true;
-        saveBtn.style.opacity = "0.7";
-        saveBtn.className = "w-full py-3 px-4 bg-slate-200 text-slate-700 font-bold rounded-xl shadow-none flex items-center justify-center gap-2 cursor-not-allowed";
-        saveBtn.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i> Entry Saved`;
-
-        showToast("Entry saved to Google Sheet!", "success");
-
-    } catch (err) {
-        clearTimeout(timeoutId);
-        console.error("Save error or timeout:", err);
-
-        // ⚠️ ERROR / RETRY STATE
-        saveBtn.disabled = false;
-        saveBtn.style.opacity = "1";
-        saveBtn.className = "w-full py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer";
-        saveBtn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> Failed - Tap to Retry`;
-
-        showToast("Connection issue! Entry not saved. Please tap retry.", "error");
-    }
-}
-
-        function resetSaveButton() {
-    const saveBtn = document.getElementById('saveSheetBtn') || 
-                    document.getElementById('saveBtn') || 
-                    document.getElementById('submitBtn');
-    if (saveBtn) {
-        saveBtn.disabled = false;
-        saveBtn.style.opacity = "1";
-        // Matches your standard button style
-        saveBtn.className = "w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer transition";
-        saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Save Entry to Google Sheet`;
-    }
-}
     function showToast(message, type = "info") {
         const toast = document.getElementById('toast');
         if (!toast) return;
@@ -979,6 +1063,6 @@ function sendWhatsAppInvoice() {
             toast.className = "hidden";
         }, 3500);
     }
-</script>
+    </script>
 </body>
 </html>
