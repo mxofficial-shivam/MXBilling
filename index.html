@@ -857,9 +857,8 @@ function sendWhatsAppInvoice() {
 }
 
    async function saveEntryToSheet() {
-    console.log("Save button tapped!"); // Check your browser console (F12) to see if this prints instantly
+    console.log("Save button tapped!");
 
-    // Fallback: Check multiple common IDs just in case your HTML uses a different name
     const saveBtn = document.getElementById('saveSheetBtn') || 
                     document.getElementById('saveBtn') || 
                     document.getElementById('submitBtn');
@@ -870,7 +869,7 @@ function sendWhatsAppInvoice() {
         return;
     }
 
-    // 🚀 INSTANT VISUAL FEEDBACK
+    // 🚀 1. INSTANT VISUAL FEEDBACK
     saveBtn.disabled = true;
     saveBtn.style.opacity = "0.9";
     saveBtn.className = "w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-not-allowed";
@@ -880,7 +879,7 @@ function sendWhatsAppInvoice() {
 
     if (!scriptUrl) {
         showToast("Please connect your Google Sheet URL in Settings first!", "error");
-        resetSaveButton();
+        if (typeof resetSaveButton === 'function') resetSaveButton();
         return;
     }
 
@@ -890,9 +889,18 @@ function sendWhatsAppInvoice() {
         ? clientInput.value.trim() 
         : (clientSelect ? clientSelect.value.trim() : '');
 
+    // 🛑 VALIDATION CHECK: If name is missing, reset button so it stops loading!
     if (!name || name === '-- Choose Client --') {
         showToast("Please select or enter a client name!", "error");
-        resetSaveButton();
+        if (typeof resetSaveButton === 'function') {
+            resetSaveButton();
+        } else {
+            // Manual fallback if resetSaveButton isn't globally declared
+            saveBtn.disabled = false;
+            saveBtn.style.opacity = "1";
+            saveBtn.className = "w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer";
+            saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Save Entry to Google Sheet`;
+        }
         return;
     }
 
