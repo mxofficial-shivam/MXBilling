@@ -268,7 +268,8 @@
 
         <!-- Toast Message Notification -->
 <!-- Floating Top Alert Toast -->
-<div id="toast" class="hidden fixed top-5 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-sm font-semibold shadow-2xl transition-all duration-300 flex items-center gap-2.5 max-w-md w-[90%] text-center justify-center"></div>    </div>
+<!-- Floating Top Alert Toast -->
+<div id="toast" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999;" class="px-5 py-3.5 rounded-2xl text-sm font-semibold shadow-2xl transition-all duration-300 items-center gap-2.5 max-w-md w-[90%] text-center justify-center"></div>    </div>
 
     <!-- Google Sheet Web App Settings Modal -->
     <div id="setupModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
@@ -1051,7 +1052,7 @@
         }
     }
 
-   function showToast(message, type = "info") {
+  function showToast(message, type = "info") {
     const toast = document.getElementById('toast');
     if (!toast) return;
 
@@ -1067,16 +1068,18 @@
     }
 
     toast.innerHTML = `${icon} <span>${message}</span>`;
-    toast.className = `fixed top-5 left-1/2 -translate-x-1/2 z-50 px-5 py-3.5 rounded-2xl text-sm font-bold shadow-2xl transition-all duration-300 flex items-center gap-3 max-w-md w-[90%] justify-center ${bgClass} block`;
+    // Apply styling class and force display flex instantly in the center
+    toast.className = `px-5 py-3.5 rounded-2xl text-sm font-bold shadow-2xl transition-all duration-300 flex items-center gap-3 max-w-md w-[90%] justify-center ${bgClass}`;
+    toast.style.display = 'flex';
 
-    // Remove bounce after 1 second so it stops shaking
+    // Remove bounce after 1 second
     setTimeout(() => {
         toast.classList.remove('animate-bounce');
     }, 1000);
 
     // Hide after 3.5 seconds
     setTimeout(() => {
-        toast.className = "hidden fixed top-5 left-1/2 -translate-x-1/2 z-50 px-5 py-3.5 rounded-2xl text-sm font-bold shadow-2xl transition-all duration-300 flex items-center gap-3 max-w-md w-[90%] justify-center";
+        toast.style.display = 'none';
     }, 3500);
 }
     </script>
