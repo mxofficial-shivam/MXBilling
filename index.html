@@ -878,20 +878,21 @@ function sendWhatsAppInvoice() {
 
     const calc = calculateBill();
 
-    // Set Loading State on Button
+    // 🚀 INSTANT FEEDBACK: Lock button and show spinner immediately upon click
     if (saveBtn) {
         saveBtn.disabled = true;
-        saveBtn.className = "w-full py-3 px-4 bg-slate-400 text-white font-semibold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-not-allowed opacity-80";
-        saveBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Saving Entry...`;
+        saveBtn.className = "w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-not-allowed animate-pulse";
+        saveBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-xl"></i> Saving to Google Sheet...`;
     }
 
-    // Safely get date value
-    const dateInputValue = (typeof selectedDeliveryDate !== 'undefined' && selectedDeliveryDate) 
-        ? selectedDeliveryDate 
-        : new Date().toISOString().split('T')[0];
+    // Retrieve active date
+    const datePicker = document.getElementById('deliveryDate') || document.getElementById('orderDate') || document.getElementById('dateInput');
+    const activeDate = (datePicker && datePicker.value) 
+        ? datePicker.value 
+        : ((typeof selectedDeliveryDate !== 'undefined' && selectedDeliveryDate) ? selectedDeliveryDate : new Date().toISOString().split('T')[0]);
 
     const payload = {
-        date: dateInputValue,
+        date: activeDate,
         clientName: name,
         phone: document.getElementById('clientPhone')?.value.trim() || '',
         orderStatus: document.getElementById('orderStatusSelect')?.value || 'Delivered',
@@ -905,6 +906,8 @@ function sendWhatsAppInvoice() {
     };
 
     try {
+        // Using 'no-cors' means fetch can't read the response body, 
+        // but it successfully sends the data to Apps Script.
         await fetch(scriptUrl, {
             method: 'POST',
             mode: 'no-cors',
@@ -912,26 +915,26 @@ function sendWhatsAppInvoice() {
             body: JSON.stringify(payload)
         });
 
-        // SUCCESS: Disable button & show "Entry Saved"
+        // SUCCESS STATE: Show clear indicator that entry is saved
         if (saveBtn) {
             saveBtn.disabled = true;
-            saveBtn.className = "w-full py-3 px-4 bg-slate-300 text-slate-600 font-semibold rounded-xl shadow-none transition flex items-center justify-center gap-2 cursor-not-allowed opacity-60";
-            saveBtn.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600"></i> Entry Saved`;
+            saveBtn.className = "w-full py-3 px-4 bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold rounded-xl shadow-none transition flex items-center justify-center gap-2 cursor-not-allowed";
+            saveBtn.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i> Entry Saved Successfully!`;
         }
 
-        showToast("Entry saved successfully to Google Sheet!", "success");
+        showToast("Entry saved to Google Sheet!", "success");
 
     } catch (err) {
         console.error("Save error:", err);
 
-        // FAILURE: Re-enable button & show "Tap to Retry"
+        // FAILURE STATE: Allow retry if something went wrong
         if (saveBtn) {
             saveBtn.disabled = false;
-            saveBtn.className = "w-full py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer";
-            saveBtn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> Failed - Tap to Retry`;
+            saveBtn.className = "w-full py-3 px-4 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer";
+            saveBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Failed - Tap to Retry`;
         }
 
-        showToast("Glich encountered! Entry not saved. Please tap retry.", "error");
+        showToast("Connection glitch! Entry not saved. Please tap retry.", "error");
     }
 }
 
