@@ -879,7 +879,7 @@ function sendWhatsAppInvoice() {
 
     if (!scriptUrl) {
         showToast("Please connect your Google Sheet URL in Settings first!", "error");
-        if (typeof resetSaveButton === 'function') resetSaveButton();
+        resetSaveButton();
         return;
     }
 
@@ -889,18 +889,10 @@ function sendWhatsAppInvoice() {
         ? clientInput.value.trim() 
         : (clientSelect ? clientSelect.value.trim() : '');
 
-    // 🛑 VALIDATION CHECK: If name is missing, reset button so it stops loading!
+    // 🛑 VALIDATION CHECK: Instantly stops loader and resets button if client name is missing
     if (!name || name === '-- Choose Client --') {
         showToast("Please select or enter a client name!", "error");
-        if (typeof resetSaveButton === 'function') {
-            resetSaveButton();
-        } else {
-            // Manual fallback if resetSaveButton isn't globally declared
-            saveBtn.disabled = false;
-            saveBtn.style.opacity = "1";
-            saveBtn.className = "w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer";
-            saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Save Entry to Google Sheet`;
-        }
+        resetSaveButton();
         return;
     }
 
@@ -963,6 +955,18 @@ function sendWhatsAppInvoice() {
     }
 }
 
+        function resetSaveButton() {
+    const saveBtn = document.getElementById('saveSheetBtn') || 
+                    document.getElementById('saveBtn') || 
+                    document.getElementById('submitBtn');
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.style.opacity = "1";
+        // Matches your standard button style
+        saveBtn.className = "w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer transition";
+        saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Save Entry to Google Sheet`;
+    }
+}
     function showToast(message, type = "info") {
         const toast = document.getElementById('toast');
         if (!toast) return;
