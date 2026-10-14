@@ -267,8 +267,8 @@
         </div>
 
         <!-- Toast Message Notification -->
-        <div id="toast" class="hidden p-4 rounded-xl text-sm font-medium text-center shadow-lg transition-all duration-300 fixed bottom-5 right-5 max-w-sm z-50"></div>
-    </div>
+<!-- Floating Top Alert Toast -->
+<div id="toast" class="hidden fixed top-5 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-sm font-semibold shadow-2xl transition-all duration-300 flex items-center gap-2.5 max-w-md w-[90%] text-center justify-center"></div>    </div>
 
     <!-- Google Sheet Web App Settings Modal -->
     <div id="setupModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
@@ -1051,18 +1051,34 @@
         }
     }
 
-    function showToast(message, type = "info") {
-        const toast = document.getElementById('toast');
-        if (!toast) return;
-        toast.innerText = message;
-        toast.className = `p-4 rounded-xl text-sm font-medium text-center shadow-lg transition-all duration-300 block ${
-            type === 'success' ? 'bg-emerald-500 text-white' :
-            type === 'error' ? 'bg-red-500 text-white' : 'bg-slate-800 text-slate-100'
-        }`;
-        setTimeout(() => {
-            toast.className = "hidden";
-        }, 3500);
+   function showToast(message, type = "info") {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+
+    let icon = '<i class="fa-solid fa-circle-info text-lg"></i>';
+    let bgClass = 'bg-slate-900 text-white border border-slate-700';
+
+    if (type === 'success') {
+        icon = '<i class="fa-solid fa-circle-check text-lg"></i>';
+        bgClass = 'bg-emerald-600 text-white shadow-emerald-500/30';
+    } else if (type === 'error') {
+        icon = '<i class="fa-solid fa-triangle-exclamation text-lg"></i>';
+        bgClass = 'bg-rose-600 text-white shadow-rose-500/30 animate-bounce';
     }
+
+    toast.innerHTML = `${icon} <span>${message}</span>`;
+    toast.className = `fixed top-5 left-1/2 -translate-x-1/2 z-50 px-5 py-3.5 rounded-2xl text-sm font-bold shadow-2xl transition-all duration-300 flex items-center gap-3 max-w-md w-[90%] justify-center ${bgClass} block`;
+
+    // Remove bounce after 1 second so it stops shaking
+    setTimeout(() => {
+        toast.classList.remove('animate-bounce');
+    }, 1000);
+
+    // Hide after 3.5 seconds
+    setTimeout(() => {
+        toast.className = "hidden fixed top-5 left-1/2 -translate-x-1/2 z-50 px-5 py-3.5 rounded-2xl text-sm font-bold shadow-2xl transition-all duration-300 flex items-center gap-3 max-w-md w-[90%] justify-center";
+    }, 3500);
+}
     </script>
 </body>
 </html>
