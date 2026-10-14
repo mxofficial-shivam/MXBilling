@@ -878,14 +878,14 @@ function sendWhatsAppInvoice() {
 
     const calc = calculateBill();
 
-    // 🚀 INSTANT FEEDBACK: Lock button and show spinner immediately upon click
+    // 1. INSTANT FEEDBACK (Fires immediately on tap)
     if (saveBtn) {
         saveBtn.disabled = true;
-        saveBtn.className = "w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-not-allowed animate-pulse";
-        saveBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-xl"></i> Saving to Google Sheet...`;
+        saveBtn.style.opacity = "0.7";
+        saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Saving to Google Sheet...`;
     }
 
-    // Retrieve active date
+    // Grab Date
     const datePicker = document.getElementById('deliveryDate') || document.getElementById('orderDate') || document.getElementById('dateInput');
     const activeDate = (datePicker && datePicker.value) 
         ? datePicker.value 
@@ -905,36 +905,47 @@ function sendWhatsAppInvoice() {
         paymentStatus: calc.status
     };
 
+    // 2. Setup 8-second Timeout Controller
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    // 3. Cache-Busting URL (Forces fresh live connection)
+    const liveUrl = scriptUrl + (scriptUrl.includes('?') ? '&' : '?') + 'nocache=' + Date.now();
+
     try {
-        // Using 'no-cors' means fetch can't read the response body, 
-        // but it successfully sends the data to Apps Script.
-        await fetch(scriptUrl, {
+        await fetch(liveUrl, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal: controller.signal
         });
 
-        // SUCCESS STATE: Show clear indicator that entry is saved
+        clearTimeout(timeoutId);
+
+        // SUCCESS: Disable button & mark Saved
         if (saveBtn) {
             saveBtn.disabled = true;
-            saveBtn.className = "w-full py-3 px-4 bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold rounded-xl shadow-none transition flex items-center justify-center gap-2 cursor-not-allowed";
-            saveBtn.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i> Entry Saved Successfully!`;
+            saveBtn.style.opacity = "0.6";
+            saveBtn.className = "w-full py-3 px-4 bg-slate-300 text-slate-700 font-bold rounded-xl shadow-none flex items-center justify-center gap-2 cursor-not-allowed";
+            saveBtn.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i> Entry Saved`;
         }
 
         showToast("Entry saved to Google Sheet!", "success");
 
     } catch (err) {
-        console.error("Save error:", err);
+        clearTimeout(timeoutId);
+        console.error("Save error or timeout:", err);
 
-        // FAILURE STATE: Allow retry if something went wrong
+        // FAILURE: Show Retry button
         if (saveBtn) {
             saveBtn.disabled = false;
-            saveBtn.className = "w-full py-3 px-4 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer";
-            saveBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Failed - Tap to Retry`;
+            saveBtn.style.opacity = "1";
+            saveBtn.className = "w-full py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer";
+            saveBtn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> Failed - Tap to Retry`;
         }
 
-        showToast("Connection glitch! Entry not saved. Please tap retry.", "error");
+        showToast("Connection issue! Entry not saved. Please tap retry.", "error");
     }
 }
 
