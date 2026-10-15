@@ -975,99 +975,113 @@ function resetPaymentButton() {
         }
     }
 
-    async function saveEntryToSheet() {
-        console.log("Save button tapped!");
+   async function saveEntryToSheet() {
+    console.log("Save button tapped!");
 
-        const saveBtn = document.getElementById('saveSheetBtn') || 
-                        document.getElementById('saveBtn') || 
-                        document.getElementById('submitBtn');
+    const saveBtn = document.getElementById('saveSheetBtn') || 
+                    document.getElementById('saveBtn') || 
+                    document.getElementById('submitBtn');
 
-        if (!saveBtn) {
-            console.error("Save button element not found in HTML!");
-            showToast("Error: Save button element missing in HTML.", "error");
-            return;
-        }
-
-        saveBtn.disabled = true;
-        saveBtn.style.opacity = "0.9";
-        saveBtn.className = "w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-not-allowed";
-        saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Saving to Google Sheet...`;
-
-        const scriptUrl = getScriptUrl();
-
-        if (!scriptUrl) {
-            showToast("Please connect your Google Sheet URL in Settings first!", "error");
-            resetSaveButton();
-            return;
-        }
-
-        const clientSelect = document.getElementById('clientSelect');
-        const clientInput = document.getElementById('clientNameInput');
-        const name = (clientInput && !clientInput.classList.contains('hidden')) 
-            ? clientInput.value.trim() 
-            : (clientSelect ? clientSelect.value.trim() : '');
-
-        if (!name || name === '-- Choose Client --') {
-            showToast("Please select or enter a client name!", "error");
-            resetSaveButton();
-            return;
-        }
-
-        const calc = calculateBill();
-
-        const datePicker = document.getElementById('deliveryDate') || document.getElementById('orderDate') || document.getElementById('dateInput');
-        const activeDate = (datePicker && datePicker.value) 
-            ? datePicker.value 
-            : ((typeof selectedDeliveryDate !== 'undefined' && selectedDeliveryDate) ? selectedDeliveryDate : new Date().toISOString().split('T')[0]);
-
-        const payload = {
-            date: activeDate,
-            clientName: name,
-            phone: document.getElementById('clientPhone')?.value.trim() || '',
-            orderStatus: document.getElementById('orderStatusSelect')?.value || 'Delivered',
-            items: items.filter(i => i.name),
-            subtotal: calc.subtotal,
-            previousDue: calc.previousDue,
-            totalPayable: calc.totalPayable,
-            amountPaid: calc.amountPaid,
-            balanceDue: calc.balanceDue,
-            paymentStatus: calc.status
-        };
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
-        const liveUrl = scriptUrl + (scriptUrl.includes('?') ? '&' : '?') + 'nocache=' + Date.now();
-
-        try {
-            await fetch(liveUrl, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload),
-                signal: controller.signal
-            });
-
-            clearTimeout(timeoutId);
-
-            saveBtn.disabled = true;
-            saveBtn.style.opacity = "0.7";
-            saveBtn.className = "w-full py-3 px-4 bg-slate-200 text-slate-700 font-bold rounded-xl shadow-none flex items-center justify-center gap-2 cursor-not-allowed";
-            saveBtn.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i> Entry Saved`;
-
-            showToast("Entry saved to Google Sheet!", "success");
-
-        } catch (err) {
-            clearTimeout(timeoutId);
-            console.error("Save error or timeout:", err);
-
-            saveBtn.disabled = false;
-            saveBtn.style.opacity = "1";
-            saveBtn.className = "w-full py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer";
-            saveBtn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> Failed - Tap to Retry`;
-
-            showToast("Connection issue! Entry not saved. Please tap retry.", "error");
-        }
+    if (!saveBtn) {
+        console.error("Save button element not found in HTML!");
+        showToast("Error: Save button element missing in HTML.", "error");
+        return;
     }
+
+    // 🚀 1. INSTANT VISUAL FEEDBACK
+    saveBtn.disabled = true;
+    saveBtn.style.opacity = "0.9";
+    saveBtn.className = "w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-not-allowed";
+    saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Verifying & Saving to Sheet...`;
+
+    const scriptUrl = getScriptUrl();
+
+    if (!scriptUrl) {
+        showToast("Please connect your Google Sheet URL in Settings first!", "error");
+        resetSaveButton();
+        return;
+    }
+
+    const clientSelect = document.getElementById('clientSelect');
+    const clientInput = document.getElementById('clientNameInput');
+    const name = (clientInput && !clientInput.classList.contains('hidden')) 
+        ? clientInput.value.trim() 
+        : (clientSelect ? clientSelect.value.trim() : '');
+
+    if (!name || name === '-- Choose Client --') {
+        showToast("Please select or enter a client name!", "error");
+        resetSaveButton();
+        return;
+    }
+
+    const calc = calculateBill();
+
+    const datePicker = document.getElementById('deliveryDate') || document.getElementById('orderDate') || document.getElementById('dateInput');
+    const activeDate = (datePicker && datePicker.value) 
+        ? datePicker.value 
+        : ((typeof selectedDeliveryDate !== 'undefined' && selectedDeliveryDate) ? selectedDeliveryDate : new Date().toISOString().split('T')[0]);
+
+    const payload = {
+        type: "saveOrder", // Explicit type flag
+        date: activeDate,
+        clientName: name,
+        phone: document.getElementById('clientPhone')?.value.trim() || '',
+        orderStatus: document.getElementById('orderStatusSelect')?.value || 'Delivered',
+        items: items.filter(i => i.name),
+        subtotal: calc.subtotal,
+        previousDue: calc.previousDue,
+        totalPayable: calc.totalPayable,
+        amountPaid: calc.amountPaid,
+        balanceDue: calc.balanceDue,
+        paymentStatus: calc.status
+    };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+    const liveUrl = scriptUrl.split('?')[0] + '?nocache=' + Date.now();
+
+    try {
+        // Using standard fetch without no-cors so we can catch actual response errors
+        const response = await fetch(liveUrl, {
+            method: 'POST',
+            redirect: 'follow',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) throw new Error(`Server returned HTTP ${response.status}`);
+
+        const resData = await response.json();
+        
+        // 🛑 VERIFICATION CHECK: If server didn't explicitly say success, throw error
+        if (!resData || resData.result !== "success") {
+            throw new Error(resData.message || "Sheet rejected the entry");
+        }
+
+        // ✅ SUCCESS STATE
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = "0.7";
+        saveBtn.className = "w-full py-3 px-4 bg-slate-200 text-slate-700 font-bold rounded-xl shadow-none flex items-center justify-center gap-2 cursor-not-allowed";
+        saveBtn.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i> Entry Saved & Verified`;
+
+        showToast("Entry successfully saved & verified on Google Sheet!", "success");
+
+    } catch (err) {
+        clearTimeout(timeoutId);
+        console.error("Save verification error:", err);
+
+        // ⚠️ ERROR / RETRY STATE
+        saveBtn.disabled = false;
+        saveBtn.style.opacity = "1";
+        saveBtn.className = "w-full py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer";
+        saveBtn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> Failed - Tap to Retry`;
+
+        showToast("Verification failed! Entry not saved. Check connection.", "error");
+    }
+}
 
     function resetSaveButton() {
         const saveBtn = document.getElementById('saveSheetBtn') || 
