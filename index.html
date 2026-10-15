@@ -399,89 +399,101 @@
     }
 
     async function submitPaymentToSheet() {
-        const payBtn = document.getElementById('savePaymentBtn');
-        const clientName = document.getElementById('payClientSelect').value;
-        const amountPaid = parseFloat(document.getElementById('payAmountInput')?.value || 0);
-        const scriptUrl = getScriptUrl();
+    const payBtn = document.getElementById('savePaymentBtn');
+    const clientName = document.getElementById('payClientSelect').value;
+    const amountPaid = parseFloat(document.getElementById('payAmountInput')?.value || 0);
+    const scriptUrl = getScriptUrl();
 
-        if (!scriptUrl) {
-            showToast("Please connect your Google Sheet URL in Settings first!", "error");
-            return;
-        }
+    if (!scriptUrl) {
+        showToast("Please connect your Google Sheet URL in Settings first!", "error");
+        return;
+    }
 
-        if (!clientName) {
-            showToast("Please select a client!", "error");
-            return;
-        }
+    if (!clientName) {
+        showToast("Please select a client!", "error");
+        return;
+    }
 
-        if (amountPaid <= 0) {
-            showToast("Please enter a valid payment amount!", "error");
-            return;
-        }
+    if (amountPaid <= 0) {
+        showToast("Please enter a valid payment amount!", "error");
+        return;
+    }
 
-        const dueEl = document.getElementById('payCurrentDue');
-        const currentDue = dueEl ? parseFloat(dueEl.dataset.due || 0) : 0;
-        const balanceDue = Math.max(0, currentDue - amountPaid);
+    const dueEl = document.getElementById('payCurrentDue');
+    const currentDue = dueEl ? parseFloat(dueEl.dataset.due || 0) : 0;
+    const balanceDue = Math.max(0, currentDue - amountPaid);
 
-        if (payBtn) {
-            payBtn.disabled = true;
-            payBtn.style.opacity = "0.9";
-            payBtn.className = "w-full py-3.5 px-4 bg-blue-600 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-not-allowed";
-            payBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Updating Payment...`;
-        }
+    if (payBtn) {
+        payBtn.disabled = true;
+        payBtn.style.opacity = "0.9";
+        payBtn.className = "w-full py-3.5 px-4 bg-blue-600 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-not-allowed";
+        payBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Updating Client Balance...`;
+    }
 
-        const payload = {
-            type: "payment",
-            date: new Date().toISOString().split('T')[0],
-            clientName: clientName,
-            amountPaid: amountPaid,
-            balanceDue: balanceDue,
-            paymentStatus: balanceDue === 0 ? "Fully Paid" : "Partially Paid"
-        };
+    const payload = {
+        type: "updateBalance",
+        clientName: clientName,
+        balanceDue: balanceDue
+    };
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
-        const liveUrl = scriptUrl + (scriptUrl.includes('?') ? '&' : '?') + 'nocache=' + Date.now();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const liveUrl = scriptUrl + (scriptUrl.includes('?') ? '&' : '?') + 'nocache=' + Date.now();
 
-        try {
-            await fetch(liveUrl, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload),
-                signal: controller.signal
-            });
+    try {
+        await fetch(liveUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
 
-            clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
 
-            const found = clientsData.find(c => (c.name || c) === clientName);
-            if (found && typeof found === 'object') {
+        // 1. Update in-memory client data
+        const found = clientsData.find(c => (c.name || c) === clientName);
+        if (found) {
+            if (typeof found === 'object') {
                 found.previousDue = balanceDue;
             }
-
-            if (payBtn) {
-                payBtn.disabled = false;
-                payBtn.style.opacity = "1";
-                payBtn.className = "w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 transition cursor-pointer";
-                payBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> Payment Updated Successfully!`;
-            }
-
-            showToast("Payment recorded & balance updated in sheet!", "success");
-            if (document.getElementById('payAmountInput')) document.getElementById('payAmountInput').value = '';
-            onPaymentClientSelect();
-
-        } catch (err) {
-            clearTimeout(timeoutId);
-            console.error("Payment error:", err);
-            if (payBtn) {
-                payBtn.disabled = false;
-                payBtn.style.opacity = "1";
-                payBtn.className = "w-full py-3.5 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer";
-                payBtn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> Failed - Tap to Retry`;
-            }
-            showToast("Connection issue! Payment not saved. Please tap retry.", "error");
         }
+
+        // 2. 🔑 CRITICAL FIX: Save updated clientsData back to localStorage cache!
+        const cachedData = localStorage.getItem('quickbill_cached_sheet_data');
+        if (cachedData) {
+            try {
+                let parsed = JSON.parse(cachedData);
+                parsed.clients = clientsData;
+                localStorage.setItem('quickbill_cached_sheet_data', JSON.stringify(parsed));
+            } catch (e) {
+                console.error("Cache update error:", e);
+            }
+        }
+
+        if (payBtn) {
+            payBtn.disabled = false;
+            payBtn.style.opacity = "1";
+            payBtn.className = "w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 transition cursor-pointer";
+            payBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> Balance Updated Successfully!`;
+        }
+
+        showToast("Client balance updated successfully!", "success");
+        if (document.getElementById('payAmountInput')) document.getElementById('payAmountInput').value = '';
+        onPaymentClientSelect();
+
+    } catch (err) {
+        clearTimeout(timeoutId);
+        console.error("Payment update error:", err);
+        if (payBtn) {
+            payBtn.disabled = false;
+            payBtn.style.opacity = "1";
+            payBtn.className = "w-full py-3.5 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer";
+            payBtn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> Failed - Tap to Retry`;
+        }
+        showToast("Connection issue! Balance not updated. Please tap retry.", "error");
     }
+}
 
     // --- Delivery Date Management ---
     function initDeliveryDate() {
