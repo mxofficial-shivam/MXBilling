@@ -262,7 +262,7 @@
 
             <!-- Submit Payment Button -->
             <button onclick="submitPaymentToSheet()" id="savePaymentBtn" class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 transition cursor-pointer">
-                <i class="fa-solid fa-check-to-slot"></i> Update Payment & Balance in Sheet
+                <i class="fa-solid fa-check-to-slot"></i> Update Payment in Sheet
             </button>
         </div>
 
@@ -1111,13 +1111,13 @@ function resetPaymentButton() {
     }
 
     toast.innerHTML = `${icon} <span>${message}</span>`;
-    toast.className = `px-5 py-3.5 rounded-2xl text-sm font-bold shadow-2xl transition-all duration-300 flex items-center gap-3 justify-center ${bgClass}`;
+    toast.className = `px-5 py-3.5 rounded-2xl text-sm font-bold shadow-2xl flex items-center gap-3 justify-center ${bgClass}`;
     toast.style.display = 'flex';
 
     // Remove bounce after 1 second
-    setTimeout(() => {
-        toast.classList.remove('animate-bounce');
-    }, 1000);
+    // setTimeout(() => {
+    //     toast.classList.remove('animate-bounce');
+    // }, 1000);
 
     // Hide after 3.5 seconds
     setTimeout(() => {
@@ -1127,6 +1127,6 @@ function resetPaymentButton() {
     </script>
    <!-- Floating Top Centered Toast Container -->
 <!-- Top Centered Toast Alert -->
-<div id="toast" style="display: none; position: fixed; top: 20px; left: 0; right: 0; width: fit-content; max-width: 90%; margin: 0 auto; z-index: 99999;" class="px-5 py-3.5 rounded-2xl text-sm font-semibold shadow-2xl transition-all duration-300 items-center gap-2.5 text-center justify-center"></div>
+<div id="toast" style="display: none; position: fixed; top: 20px; left: 0; right: 0; width: fit-content; max-width: 90%; margin: 0 auto; z-index: 99999;" class="px-5 py-3.5 rounded-2xl text-sm font-semibold shadow-2xl items-center gap-2.5 text-center justify-center"></div>
 </body>
 </html>
