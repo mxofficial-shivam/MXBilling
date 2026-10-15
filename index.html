@@ -373,30 +373,47 @@
     }
 
     function onPaymentClientSelect() {
-        const clientName = document.getElementById('payClientSelect').value;
-        const found = clientsData.find(c => (c.name || c) === clientName);
-        const due = found && found.previousDue !== undefined ? Number(found.previousDue) : 0;
-        
-        const dueEl = document.getElementById('payCurrentDue');
-        if (dueEl) {
-            dueEl.dataset.due = due;
-            dueEl.innerText = `₹${due.toFixed(2)}`;
-        }
-        calculateNewBalance();
+    const clientName = document.getElementById('payClientSelect').value;
+    const found = clientsData.find(c => (c.name || c) === clientName);
+    const due = found && found.previousDue !== undefined ? Number(found.previousDue) : 0;
+    
+    const dueEl = document.getElementById('payCurrentDue');
+    if (dueEl) {
+        dueEl.dataset.due = due;
+        dueEl.innerText = `₹${due.toFixed(2)}`;
     }
+    
+    // 🔑 Reset button back to original state when a client is chosen
+    resetPaymentButton();
+    calculateNewBalance();
+}
 
-    function calculateNewBalance() {
-        const dueEl = document.getElementById('payCurrentDue');
-        const currentDue = dueEl ? parseFloat(dueEl.dataset.due || 0) : 0;
-        const paidInput = document.getElementById('payAmountInput');
-        const paid = paidInput ? parseFloat(paidInput.value || 0) : 0;
-        const newBalance = Math.max(0, currentDue - paid);
-        
-        const newBalEl = document.getElementById('payNewBalance');
-        if (newBalEl) {
-            newBalEl.innerText = `₹${newBalance.toFixed(2)}`;
-        }
+function calculateNewBalance() {
+    const dueEl = document.getElementById('payCurrentDue');
+    const currentDue = dueEl ? parseFloat(dueEl.dataset.due || 0) : 0;
+    const paidInput = document.getElementById('payAmountInput');
+    const paid = paidInput ? parseFloat(paidInput.value || 0) : 0;
+    const newBalance = Math.max(0, currentDue - paid);
+    
+    const newBalEl = document.getElementById('payNewBalance');
+    if (newBalEl) {
+        newBalEl.innerText = `₹${newBalance.toFixed(2)}`;
     }
+    
+    // 🔑 Reset button back to original state when typing the payment amount
+    resetPaymentButton();
+}
+
+// Helper function to restore the payment button to its default state
+function resetPaymentButton() {
+    const payBtn = document.getElementById('savePaymentBtn');
+    if (payBtn) {
+        payBtn.disabled = false;
+        payBtn.style.opacity = "1";
+        payBtn.className = "w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 transition cursor-pointer";
+        payBtn.innerHTML = `<i class="fa-solid fa-check-to-slot"></i> Update Payment & Balance in Sheet`;
+    }
+}
 
     async function submitPaymentToSheet() {
     const payBtn = document.getElementById('savePaymentBtn');
