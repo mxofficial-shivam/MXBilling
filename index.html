@@ -988,11 +988,12 @@ function resetPaymentButton() {
         return;
     }
 
-    // 🚀 1. INSTANT VISUAL FEEDBACK
+    // 🚀 1. INSTANT VISUAL FEEDBACK & PREVENT DOUBLE-CLICK
+    if (saveBtn.disabled) return; // Prevent multiple rapid taps
     saveBtn.disabled = true;
     saveBtn.style.opacity = "0.9";
     saveBtn.className = "w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-not-allowed";
-    saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Verifying & Saving to Sheet...`;
+    saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Saving & Verifying...`;
 
     const scriptUrl = getScriptUrl();
 
@@ -1022,7 +1023,7 @@ function resetPaymentButton() {
         : ((typeof selectedDeliveryDate !== 'undefined' && selectedDeliveryDate) ? selectedDeliveryDate : new Date().toISOString().split('T')[0]);
 
     const payload = {
-        type: "saveOrder", // Explicit type flag
+        type: "saveOrder",
         date: activeDate,
         clientName: name,
         phone: document.getElementById('clientPhone')?.value.trim() || '',
@@ -1036,12 +1037,12 @@ function resetPaymentButton() {
         paymentStatus: calc.status
     };
 
+    // Increased timeout to 15 seconds to accommodate Google Apps Script cold starts
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000); 
     const liveUrl = scriptUrl.split('?')[0] + '?nocache=' + Date.now();
 
     try {
-        // Using standard fetch without no-cors so we can catch actual response errors
         const response = await fetch(liveUrl, {
             method: 'POST',
             redirect: 'follow',
@@ -1052,22 +1053,27 @@ function resetPaymentButton() {
 
         clearTimeout(timeoutId);
 
-        if (!response.ok) throw new Error(`Server returned HTTP ${response.status}`);
-
-        const resData = await response.json();
+        const textResponse = await response.text();
+        let resData;
+        try {
+            resData = JSON.parse(textResponse);
+        } catch (e) {
+            throw new Error("Server returned non-JSON response: " + textResponse.substring(0, 100));
+        }
         
-        // 🛑 VERIFICATION CHECK: If server didn't explicitly say success, throw error
         if (!resData || resData.result !== "success") {
             throw new Error(resData.message || "Sheet rejected the entry");
         }
 
-        // ✅ SUCCESS STATE
+        // ✅ TRUE SUCCESS STATE
         saveBtn.disabled = true;
         saveBtn.style.opacity = "0.7";
         saveBtn.className = "w-full py-3 px-4 bg-slate-200 text-slate-700 font-bold rounded-xl shadow-none flex items-center justify-center gap-2 cursor-not-allowed";
         saveBtn.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i> Entry Saved & Verified`;
 
-        showToast("Entry successfully saved & verified on Google Sheet!", "success");
+        showToast("Entry successfully saved & verified!", "success");
+
+        // Optional: Reset form or items here if you want after successful save
 
     } catch (err) {
         clearTimeout(timeoutId);
@@ -1079,7 +1085,7 @@ function resetPaymentButton() {
         saveBtn.className = "w-full py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer";
         saveBtn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> Failed - Tap to Retry`;
 
-        showToast("Verification failed! Entry not saved. Check connection.", "error");
+        showToast("Save failed! Please check your connection and tap retry.", "error");
     }
 }
 
