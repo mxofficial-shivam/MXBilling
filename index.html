@@ -411,7 +411,7 @@ function resetPaymentButton() {
         payBtn.disabled = false;
         payBtn.style.opacity = "1";
         payBtn.className = "w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 transition cursor-pointer";
-        payBtn.innerHTML = `<i class="fa-solid fa-check-to-slot"></i> Update Payment & Balance in Sheet`;
+        payBtn.innerHTML = `<i class="fa-solid fa-check-to-slot"></i> Update Payment in Sheet`;
     }
 }
 
@@ -755,7 +755,7 @@ function resetPaymentButton() {
                         }).join('')}
                     </select>
                 </td>
-                <td class="p-2 w-20">
+                <td class="class="p-2 w-28 sm:w-20">
                     <input 
                         type="number" 
                         min="1" 
