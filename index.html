@@ -766,16 +766,17 @@ function resetPaymentButton() {
     style="width: 45px; min-width: 45px;"
 >
                 </td>
-                <td class="p-2 w-28">
-                    <input 
-                        type="number" 
-                        min="0" 
-                        value="${item.rate}" 
-                        oninput="updateItem(${item.id}, 'rate', this.value)" 
-                        onfocus="this.select()" 
-                        class="w-full px-2.5 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-center font-medium"style="width: 35px; min-width: 35px;"
-                    >
-                </td>
+                <td class="p-2 w-32">
+    <input 
+        type="number" 
+        min="0" 
+        value="${item.rate}" 
+        oninput="updateItem(${item.id}, 'rate', this.value)" 
+        onfocus="this.select()" 
+        class="px-2 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-center font-medium" 
+        style="width: 35px; min-width: 35px;"
+    >
+</td>
                 <td class="p-2 text-right font-semibold text-slate-700 item-row-total whitespace-nowrap">
                     ₹${(item.qty * item.rate).toFixed(2)}
                 </td>
