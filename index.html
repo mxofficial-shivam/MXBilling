@@ -23,6 +23,38 @@
     <div class="bg-amber-500 text-slate-950 font-bold text-xs py-2 text-center shadow-md">
     ⚠️ STAGING MODE - TEST ENVIRONMENT
 </div>
+    <!-- Top Navigation Bar -->
+<header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        
+        <!-- Logo / App Title -->
+        <div class="flex items-center space-x-3">
+            <span class="bg-emerald-500 text-slate-950 font-bold px-2.5 py-1 rounded-lg text-sm">MX</span>
+            <h1 class="font-bold text-lg tracking-wide">MX Foods CRM</h1>
+        </div>
+
+        <!-- Desktop Menu Links -->
+        <nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
+            <a href="index.html" class="hover:text-emerald-400 transition-colors">Billing</a>
+            <a href="history.html" class="hover:text-emerald-400 transition-colors">Past Orders</a>
+            <a href="dashboard.html" class="hover:text-emerald-400 transition-colors">Dashboard</a>
+            <a href="clients.html" class="hover:text-emerald-400 transition-colors">Clients</a>
+        </nav>
+
+        <!-- Mobile Hamburger Button -->
+        <button onclick="toggleMobileMenu()" class="md:hidden text-slate-300 hover:text-white focus:outline-none p-1">
+            <i id="menuIcon" class="fa-solid fa-bars text-xl"></i>
+        </button>
+    </div>
+
+    <!-- Mobile Slide-out Menu -->
+    <div id="mobileMenu" class="hidden md:hidden bg-slate-800 border-t border-slate-700 px-4 pt-3 pb-5 space-y-3">
+        <a href="index.html" class="block py-2 px-3 rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium">Billing Portal</a>
+        <a href="history.html" class="block py-2 px-3 rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium">Past Orders & History</a>
+        <a href="dashboard.html" class="block py-2 px-3 rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium">Sales Dashboard</a>
+        <a href="clients.html" class="block py-2 px-3 rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium">Clients Management</a>
+    </div>
+</header>
 
     <div class="max-w-6xl mx-auto space-y-6">
 
@@ -1135,6 +1167,23 @@ function resetPaymentButton() {
         toast.style.display = 'none';
     }, 3500);
 }
+        // ==========================================
+        // NAVIGATION MENU TOGGLE (NEW)
+        // ==========================================
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const icon = document.getElementById('menuIcon');
+            
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-xmark'); // Changes icon to 'X'
+            } else {
+                menu.classList.add('hidden');
+                icon.classList.remove('fa-xmark');
+                icon.classList.add('fa-bars'); // Changes icon back to hamburger
+            }
+        }
     </script>
    <!-- Floating Top Centered Toast Container -->
 <!-- Top Centered Toast Alert -->
