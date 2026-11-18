@@ -1,1 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MX Foods CRM - Past Orders & History</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
 
+    <!-- Top Navigation Bar (Consistent across all pages) -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-[9999]">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            
+            <!-- Logo / App Title -->
+            <div class="flex items-center space-x-3">
+                <span class="bg-emerald-500 text-slate-950 font-bold px-2.5 py-1 rounded-lg text-sm">MX</span>
+                <h1 class="font-bold text-lg tracking-wide">MX Foods CRM</h1>
+            </div>
+
+            <!-- Desktop Menu Links -->
+            <nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
+                <a href="index.html" class="text-slate-300 hover:text-emerald-400 transition-colors">Billing</a>
+                <a href="history.html" class="text-emerald-400 font-bold border-b-2 border-emerald-400 pb-0.5">Past Orders</a>
+                <a href="dashboard.html" class="text-slate-300 hover:text-emerald-400 transition-colors">Dashboard</a>
+                <a href="clients.html" class="text-slate-300 hover:text-emerald-400 transition-colors">Clients</a>
+            </nav>
+
+            <!-- Mobile Hamburger Button -->
+            <button onclick="toggleMobileMenu()" class="md:hidden text-slate-300 hover:text-white focus:outline-none p-1">
+                <i id="menuIcon" class="fa-solid fa-bars text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Slide-out Menu -->
+        <div id="mobileMenu" class="hidden md:hidden bg-slate-800 border-t border-slate-700 px-4 pt-3 pb-5 space-y-3">
+            <a href="index.html" class="block py-2 px-3 rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium text-slate-200">Billing Portal</a>
+            <a href="history.html" class="block py-2 px-3 rounded-lg bg-slate-700 text-emerald-400 transition-colors text-sm font-bold">Past Orders & History</a>
+            <a href="dashboard.html" class="block py-2 px-3 rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium text-slate-200">Sales Dashboard</a>
+            <a href="clients.html" class="block py-2 px-3 rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium text-slate-200">Clients Management</a>
+        </div>
+    </header>
+
+    <!-- Main Page Content Container -->
+    <main class="p-3 md:p-6 max-w-7xl mx-auto space-y-6">
+
+        <!-- Top Header Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center text-white text-2xl shadow-md shadow-emerald-500/20">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Past Orders & History</h1>
+                    <p class="text-xs md:text-sm text-slate-500">Search, Filter & Re-send B2B Delivery Invoices</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="fetchOrders()" class="px-4 py-2 text-xs md:text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors flex items-center gap-2">
+                    <i id="syncIcon" class="fa-solid fa-rotate text-emerald-600"></i> Sync Latest Orders
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Split Layout: Orders List (Left) + Filters Sidebar (Right on Desktop, Top on Mobile) -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+
+            <!-- HISTORY FILTERS CARD (Appears first on Mobile, Right column on Desktop) -->
+            <div class="lg:col-span-1 lg:order-2 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h2 class="font-bold text-sm uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-filter text-emerald-500"></i> History Filters
+                    </h2>
+                    <button onclick="resetFilters()" class="text-xs text-emerald-600 hover:underline font-medium">Reset</button>
+                </div>
+
+                <!-- Global Search -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Search Client / Bill #</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
+                        <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="Type name or bill #..." 
+                               class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition">
+                    </div>
+                </div>
+
+                <!-- Date Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Filter by Date</label>
+                    <input type="date" id="dateFilter" onchange="applyFilters()" 
+                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition">
+                </div>
+
+                <!-- Order Status Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Order Status</label>
+                    <select id="statusFilter" onchange="applyFilters()" 
+                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition">
+                        <option value="ALL">All Statuses</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Pending">Pending</option>
+                    </select>
+                </div>
+
+                <!-- Quick Summary Box -->
+                <div class="bg-slate-900 text-white rounded-xl p-4 mt-4 space-y-2">
+                    <div class="flex justify-between text-xs text-slate-400">
+                        <span>Showing Orders:</span>
+                        <span id="filteredCount" class="font-bold text-white">0</span>
+                    </div>
+                    <div class="flex justify-between text-sm font-bold border-t border-slate-700 pt-2">
+                        <span class="text-slate-300">Filtered Total:</span>
+                        <span id="filteredTotal" class="text-emerald-400">₹0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAST ORDERS DISPLAY AREA (Left 3 Columns on Desktop) -->
+            <div class="lg:col-span-3 lg:order-1 space-y-4">
+
+                <!-- Loading / Status Banner -->
+                <div id="statusBanner" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl text-xs font-medium flex items-center justify-between">
+                    <span class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="statusText">Loading orders from Google Sheet...</span>
+                    </span>
+                </div>
+
+                <!-- DESKTOP TABLE VIEW (Hidden on Mobile) -->
+                <div class="hidden md:block bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                    <th class="py-3.5 px-4">Date</th>
+                                    <th class="py-3.5 px-4">Client Name</th>
+                                    <th class="py-3.5 px-4">Bill #</th>
+                                    <th class="py-3.5 px-4">Status</th>
+                                    <th class="py-3.5 px-4">Items Summary</th>
+                                    <th class="py-3.5 px-4 text-right">Total Bill</th>
+                                    <th class="py-3.5 px-4 text-right">Paid</th>
+                                    <th class="py-3.5 px-4 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="desktopTableBody" class="divide-y divide-slate-100 text-sm">
+                                <!-- Rows injected dynamically by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- MOBILE CARD FEED VIEW (Hidden on Desktop) -->
+                <div id="mobileCardsContainer" class="md:hidden space-y-3">
+                    <!-- Cards injected dynamically by JS -->
+                </div>
+
+                <!-- Empty State (Shown when no orders match) -->
+                <div id="emptyState" class="hidden bg-white rounded-2xl border border-slate-200 p-10 text-center space-y-2">
+                    <i class="fa-solid fa-folder-open text-3xl text-slate-300"></i>
+                    <p class="font-bold text-slate-700">No matching orders found</p>
+                    <p class="text-xs text-slate-500">Try clearing your search or selecting a different date.</p>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ==========================================
+        // 1. CONFIGURATION & SAMPLE FALLBACK DATA
+        // ==========================================
+        // Uses the same saved URL from index.html if available, or fallback URL
+        const SCRIPT_URL = localStorage.getItem('mx_script_url') || 'https://script.google.com/macros/s/AKfycbzhgaee7g5e1og8PyD80frnOZ9ILDjMBP3B4Q8tnl2cz8wLx3oktgjHeCTSiA8azHw2Xg/exec';
+
+        let allOrders = [];
+
+        // Sample data so you can immediately preview the UI before connecting live sheet data
+        const sampleOrders = [
+            {
+                date: '2026-11-18',
+                clientName: 'Spice Route Kitchen',
+                phone: '9876543210',
+                billNo: 'MX-1042',
+                status: 'Delivered',
+                items: '10x Veg Momos, 5x Spring Rolls',
+                totalBill: 3500,
+                amountPaid: 2000
+            },
+            {
+                date: '2026-11-18',
+                clientName: 'Urban Bites Cafe',
+                phone: '9811223344',
+                billNo: 'MX-1041',
+                status: 'Pending',
+                items: '15x Paneer Momos, 8x French Fries',
+                totalBill: 4800,
+                amountPaid: 4800
+            },
+            {
+                date: '2026-11-17',
+                clientName: 'Metro Food Court',
+                phone: '9988776655',
+                billNo: 'MX-1040',
+                status: 'Delivered',
+                items: '20x Chicken Momos, 10x Nuggets',
+                totalBill: 6200,
+                amountPaid: 5000
+            }
+        ];
+
+        // ==========================================
+        // 2. NAVIGATION MENU TOGGLE
+        // ==========================================
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const icon = document.getElementById('menuIcon');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                icon.classList.replace('fa-bars', 'fa-xmark');
+            } else {
+                menu.classList.add('hidden');
+                icon.classList.replace('fa-xmark', 'fa-bars');
+            }
+        }
+
+        // ==========================================
+        // 3. FETCH & RENDER ORDERS
+        // ==========================================
+        async function fetchOrders() {
+            const syncIcon = document.getElementById('syncIcon');
+            const statusText = document.getElementById('statusText');
+            syncIcon.classList.add('fa-spin');
+
+            if (!SCRIPT_URL || SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbzhgaee7g5e1og8PyD80frnOZ9ILDjMBP3B4Q8tnl2cz8wLx3oktgjHeCTSiA8azHw2Xg/exec') {
+                // Load preview data if URL isn't configured yet
+                allOrders = sampleOrders;
+                statusText.textContent = 'Preview Mode: Showing sample records (Connect Google Sheet URL to load live data)';
+                syncIcon.classList.remove('fa-spin');
+                applyFilters();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getOrders`);
+                const data = await response.json();
+                
+                if (data && Array.isArray(data.orders)) {
+                    allOrders = data.orders.reverse(); // Show newest first
+                    statusText.textContent = `Connected live • Loaded ${allOrders.length} past orders`;
+                } else {
+                    allOrders = sampleOrders;
+                    statusText.textContent = 'Connected, but no order rows returned yet. Showing sample preview.';
+                }
+            } catch (error) {
+                console.error('Error fetching orders:', error);
+                allOrders = sampleOrders;
+                statusText.textContent = 'Using offline preview data (Check Apps Script doGet setup)';
+            } finally {
+                syncIcon.classList.remove('fa-spin');
+                applyFilters();
+            }
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const dateVal = document.getElementById('dateFilter').value;
+            const statusVal = document.getElementById('statusFilter').value;
+
+            const filtered = allOrders.filter(order => {
+                const matchesSearch = !searchTerm || 
+                    (order.clientName && order.clientName.toLowerCase().includes(searchTerm)) ||
+                    (order.billNo && order.billNo.toLowerCase().includes(searchTerm)) ||
+                    (order.items && order.items.toLowerCase().includes(searchTerm));
+                
+                const matchesDate = !dateVal || order.date === dateVal;
+                const matchesStatus = statusVal === 'ALL' || order.status === statusVal;
+
+                return matchesSearch && matchesDate && matchesStatus;
+            });
+
+            renderOrders(filtered);
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('dateFilter').value = '';
+            document.getElementById('statusFilter').value = 'ALL';
+            applyFilters();
+        }
+
+        function renderOrders(orders) {
+            const desktopBody = document.getElementById('desktopTableBody');
+            const mobileContainer = document.getElementById('mobileCardsContainer');
+            const emptyState = document.getElementById('emptyState');
+
+            desktopBody.innerHTML = '';
+            mobileContainer.innerHTML = '';
+
+            // Update Summary Metrics
+            document.getElementById('filteredCount').textContent = orders.length;
+            const totalSum = orders.reduce((sum, o) => sum + (parseFloat(o.totalBill) || 0), 0);
+            document.getElementById('filteredTotal').textContent = `₹${totalSum.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+            if (orders.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            orders.forEach(order => {
+                const isDelivered = order.status === 'Delivered';
+                const badgeClass = isDelivered 
+                    ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+                    : 'bg-amber-100 text-amber-700 border-amber-200';
+
+                const formattedTotal = `₹${parseFloat(order.totalBill || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+                const formattedPaid = `₹${parseFloat(order.amountPaid || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+                // 1. Render Desktop Table Row
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">${order.date}</td>
+                    <td class="py-3.5 px-4 font-bold text-slate-900">${order.clientName}</td>
+                    <td class="py-3.5 px-4 text-slate-500 font-mono text-xs">${order.billNo || '-'}</td>
+                    <td class="py-3.5 px-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold border ${badgeClass}">
+                            ${order.status}
+                        </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate" title="${order.items}">${order.items}</td>
+                    <td class="py-3.5 px-4 text-right font-bold text-slate-900">${formattedTotal}</td>
+                    <td class="py-3.5 px-4 text-right font-medium text-emerald-600">${formattedPaid}</td>
+                    <td class="py-3.5 px-4 text-center">
+                        <button onclick='resendWhatsApp(${JSON.stringify(order)})' title="Re-send WhatsApp Invoice"
+                                class="p-2 bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white rounded-lg transition-colors">
+                            <i class="fa-brands fa-whatsapp text-base"></i>
+                        </button>
+                    </td>
+                `;
+                desktopBody.appendChild(tr);
+
+                // 2. Render Mobile Card
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 space-y-3';
+                card.innerHTML = `
+                    <div class="flex justify-between items-center text-xs text-slate-500 border-b border-slate-100 pb-2">
+                        <span><i class="fa-regular fa-calendar mr-1"></i> ${order.date}</span>
+                        <span class="font-mono font-semibold">Bill #: ${order.billNo || 'N/A'}</span>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-start gap-2">
+                            <h3 class="font-bold text-base text-slate-900">${order.clientName}</h3>
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${badgeClass}">
+                                ${order.status}
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-1.5 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                            ${order.items}
+                        </p>
+                    </div>
+                    <div class="flex justify-between items-end pt-1">
+                        <div>
+                            <p class="text-[11px] uppercase font-bold text-slate-400">Total Bill</p>
+                            <p class="text-lg font-extrabold text-slate-900">${formattedTotal}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[11px] uppercase font-bold text-slate-400">Paid</p>
+                            <p class="text-sm font-bold text-emerald-600">${formattedPaid}</p>
+                        </div>
+                    </div>
+                    <button onclick='resendWhatsApp(${JSON.stringify(order)})' 
+                            class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.99] text-white font-bold text-sm rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-brands fa-whatsapp text-lg"></i> Re-send WhatsApp Invoice
+                    </button>
+                `;
+                mobileContainer.appendChild(card);
+            });
+        }
+
+        // ==========================================
+        // 4. ONE-CLICK WHATSAPP RE-SEND
+        // ==========================================
+        function resendWhatsApp(order) {
+            const balance = (parseFloat(order.totalBill) || 0) - (parseFloat(order.amountPaid) || 0);
+            const message = `*MX FOODS - INVOICE COPY*\n` +
+                            `--------------------------\n` +
+                            `*Client:* ${order.clientName}\n` +
+                            `*Date:* ${order.date}\n` +
+                            `*Bill #:* ${order.billNo || 'N/A'}\n` +
+                            `*Status:* ${order.status}\n\n` +
+                            `*Items:*\n${order.items}\n\n` +
+                            `*Total Bill:* ₹${order.totalBill}\n` +
+                            `*Amount Paid:* ₹${order.amountPaid}\n` +
+                            `*Balance Due:* ₹${balance}\n` +
+                            `--------------------------\n` +
+                            `Thank you for your business!`;
+
+            const cleanPhone = (order.phone || '').replace(/\D/g, '');
+            const waUrl = cleanPhone 
+                ? `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(message)}`
+                : `https://wa.me/?text=${encodeURIComponent(message)}`;
+
+            window.open(waUrl, '_blank');
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', fetchOrders);
+    </script>
+</body>
+</html>
